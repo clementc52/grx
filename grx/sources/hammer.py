@@ -98,8 +98,11 @@ def parse(zip_path, since_days=None, log=print, basket=6, recent_days=120):
             p = prods.get(r.get("product_id"))
             if not p:
                 continue
-            d = (r.get("nowtime") or "")[:10]
-            if not d or d < cutoff:
+            digits = re.sub(r"\D", "", r.get("nowtime") or "")[:8]   # '2026-11-22 08:00' or '20261122 ...'
+            if len(digits) < 8:
+                continue
+            d = f"{digits[:4]}-{digits[4:6]}-{digits[6:8]}"
+            if d < cutoff:
                 continue
             item, vendor, name, size_text, brand = p
             price = units.money(r.get("current_price"))
@@ -139,6 +142,8 @@ def parse(zip_path, since_days=None, log=print, basket=6, recent_days=120):
         for c, avg, pid in sorted(stable, key=lambda x: x[1])[:basket]:
             chosen[pid] = k
     log(f"  basket: {len(chosen)} stable products across {len(groups)} item-chain pairs")
+    if not chosen:
+        raise RuntimeError("no stable products selected; refusing to overwrite history")
 
     # pass 2: daily prices of basket products, sizes for shrinkflation
     daily_ = {}   # pid -> {date: (up, was_up, price)}

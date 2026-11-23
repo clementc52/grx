@@ -112,7 +112,7 @@ def test_hammer_and_build_end_to_end():
         w.writerow(["nowtime", "current_price", "old_price", "price_per_unit", "other", "product_id"])
         d0 = dt.date(2025, 1, 1)
         for d in range(500):
-            day = (d0 + dt.timedelta(days=d)).isoformat() + " 08:00:00"
+            day = (d0 + dt.timedelta(days=d)).strftime("%Y%m%d" if d % 2 else "%Y-%m-%d") + " 08:00:00"   # both formats seen
             on = d % 28 < 7
             w.writerow([day, "$3.99" if on else "$5.49", "$5.49" if on else "", "", "", 1])
             w.writerow([day, "$4.49" if d % 42 < 7 else "$5.29", "", "", "", 2])
