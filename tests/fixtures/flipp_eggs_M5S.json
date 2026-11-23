@@ -1,0 +1,21 @@
+{"items":[
+{"merchant_name":"Walmart","name":"Great Value organic free-run large brown eggs","current_price":6.97,"pre_price_text":null,"post_price_text":null,"sale_story":"Rollback","valid_from":"2026-11-19T04:00:00+00:00","valid_to":"2026-11-26T04:59:59+00:00","flyer_id":1,"id":11},
+{"merchant_name":"Real Canadian Superstore","name":"NO NAME® MEDIUM EGG, 30'S","current_price":9.18,"pre_price_text":null,"post_price_text":null,"sale_story":"Get PC Optimum 2,500 pts, $2.50 back in points","valid_from":"2026-11-19T04:00:00+00:00","valid_to":"2026-11-26T04:59:59+00:00","flyer_id":2,"id":12},
+{"merchant_name":"Longos","name":"Gray Ridge Large White Eggs","current_price":3.99,"pre_price_text":null,"post_price_text":null,"sale_story":"LOW PRICE LOCKDOWN","valid_from":"2026-11-19T04:00:00+00:00","valid_to":"2026-11-26T04:59:59+00:00","flyer_id":3,"id":13},
+{"merchant_name":"Loblaws","name":"PC® FREE RUN LARGE BROWN EGGS, 12'S","current_price":6.5,"pre_price_text":null,"post_price_text":null,"sale_story":"SAVE 50¢","valid_from":"2026-11-19T04:00:00+00:00","valid_to":"2026-11-26T04:59:59+00:00","flyer_id":4,"id":14},
+{"merchant_name":"Seasons Food Mart","name":"18 pcs Extra Large White Eggs","current_price":5.98,"pre_price_text":null,"post_price_text":"ea","sale_story":null,"valid_from":"2026-11-20T04:00:00+00:00","valid_to":"2026-11-27T04:59:59+00:00","flyer_id":5,"id":15},
+{"merchant_name":"Food Basics","name":"SELECTION LARGE EGGS","current_price":4.48,"pre_price_text":null,"post_price_text":"EA.","sale_story":null,"valid_from":"2026-11-19T04:00:00+00:00","valid_to":"2026-11-26T04:59:59+00:00","flyer_id":6,"id":16},
+{"merchant_name":"Farm Boy","name":"Burnbrae Farms Eggs2GO!","current_price":1.5,"pre_price_text":null,"post_price_text":"/pkg","sale_story":null,"valid_from":"2026-11-19T04:00:00+00:00","valid_to":"2026-11-26T04:59:59+00:00","flyer_id":7,"id":17},
+{"merchant_name":"No Frills","name":"GRADE A LARGE WHITE EGGS","current_price":4.99,"pre_price_text":null,"post_price_text":null,"sale_story":null,"valid_from":"2026-11-19T04:00:00+00:00","valid_to":"2026-11-26T04:59:59+00:00","flyer_id":8,"id":18},
+{"merchant_name":"T&T Supermarket","name":"BURNBRAE FARMS OMEGA 3 EGGS (LARGE), 18pcs","current_price":6.79,"pre_price_text":null,"post_price_text":"/ea","sale_story":null,"valid_from":"2026-11-20T04:00:00+00:00","valid_to":"2026-11-27T04:59:59+00:00","flyer_id":9,"id":19},
+{"merchant_name":"T&T Supermarket","name":"CHINA MAID SALTED DUCK EGG YOLK, 144G","current_price":4.99,"pre_price_text":null,"post_price_text":"/ea","sale_story":null,"valid_from":"2026-11-20T04:00:00+00:00","valid_to":"2026-11-27T04:59:59+00:00","flyer_id":9,"id":20},
+{"merchant_name":"Foody Mart","name":"Gray Ridge Medium Brown Egg 180pcs","current_price":40,"pre_price_text":null,"post_price_text":"CASE","sale_story":null,"valid_from":"2026-11-20T04:00:00+00:00","valid_to":"2026-11-27T04:59:59+00:00","flyer_id":10,"id":21},
+{"merchant_name":"Metro","name":"JUST EGG","current_price":5.99,"pre_price_text":null,"post_price_text":"ea.","sale_story":null,"valid_from":"2026-11-19T04:00:00+00:00","valid_to":"2026-12-03T04:59:59+00:00","flyer_id":11,"id":22},
+{"merchant_name":"Foody Mart","name":"Egg Tart","current_price":6.59,"pre_price_text":null,"post_price_text":"PK","sale_story":null,"valid_from":"2026-11-20T04:00:00+00:00","valid_to":"2026-11-27T04:59:59+00:00","flyer_id":10,"id":23}
+],
+"ecom_items":[
+{"merchant":"Walmart","name":"Great Value Large 12 Eggs L","current_price":3.93,"original_price":null,"sku":"a"},
+{"merchant":"Walmart","name":"Gray Ridge Premium Large White 18 Eggs L","current_price":6.98,"original_price":null,"sku":"b"},
+{"merchant":"Walmart","name":"Burnbrae Farms Egg Creations Whole Eggs Original","current_price":5.98,"original_price":null,"sku":"c"},
+{"merchant":"Walmart","name":"Kosa Can Quail Eggs In Water 425 G","current_price":3.97,"original_price":null,"sku":"d"}
+]}

@@ -1,0 +1,15 @@
+{
+  "home_label": "Grosvenor St, Toronto",
+  "home_fsa": "M5S",
+  "radius_km": 100,
+  "max_fsas": 10,
+  "hammer_days": 730,
+  "price_match_at": ["No Frills", "Real Canadian Superstore", "Giant Tiger"],
+  "watch": [
+    {"item": "eggs-large", "below": 4.00},
+    {"item": "chicken-breast", "signal": "STOCK UP"},
+    {"item": "butter", "below": 5.00},
+    {"item": "coffee", "signal": "STOCK UP"},
+    {"item": "toilet-paper", "signal": "STOCK UP"}
+  ]
+}

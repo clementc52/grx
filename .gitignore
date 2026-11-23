@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+data/hammer/
+data/flipp/latest.json
+site/data/
