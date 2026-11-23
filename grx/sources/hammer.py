@@ -71,7 +71,16 @@ def _unit_price(price, item, name, size_text):
     return units.unit_price(price, item["unit"], name, size_text or "", post)
 
 
-def parse(zip_path, since_days=None, log=print):
+def parse(zip_path, since_days=None, log=print, basket=6, recent_days=120):
+    """Two passes over the daily price file.
+
+    Pass 1 scores every matching product by how often it was priced recently
+    and its typical unit price. Each (item, chain) then gets a stable basket:
+    the cheapest few products that are priced on most days. Pass 2 builds the
+    daily series as the cheapest basket product, carrying each product's last
+    price forward up to 7 days. A fixed basket stops the series from jumping
+    whenever the scraper happens to skip a product on some day.
+    """
     z = zipfile.ZipFile(zip_path)
     prods = {}
     for r in _reader(z, _member(z, "product")):
@@ -81,46 +90,106 @@ def parse(zip_path, since_days=None, log=print):
                 prods[r.get("id")] = (item, (r.get("vendor") or "").strip(), name, r.get("units") or "", r.get("brand") or "")
                 break
     log(f"  {len(prods)} Hammer products match the catalog")
-    cutoff = (dt.date.today() - dt.timedelta(days=since_days)).isoformat() if since_days else ""
-    agg = {}      # (item, vendor, date) -> [unit price, was unit price]
-    sizes = {}    # product_id -> [(date, size)]
-    n = dropped = 0
-    latest = {}   # (item, vendor) -> {product name: (date, unit price, price, units)} for the audit log
-    for r in _reader(z, _member(z, "raw")):
-        pid = r.get("product_id")
-        p = prods.get(pid)
-        if not p:
-            continue
-        d = (r.get("nowtime") or "")[:10]
-        if not d or d < cutoff:
-            continue
-        item, vendor, name, size_text, brand = p
-        price = units.money(r.get("current_price"))
-        up = _unit_price(price, item, name, size_text)
-        if not plausible(item, up):
+    today = dt.date.today()
+    cutoff = (today - dt.timedelta(days=since_days)).isoformat() if since_days else ""
+
+    def rows():
+        for r in _reader(z, _member(z, "raw")):
+            p = prods.get(r.get("product_id"))
+            if not p:
+                continue
+            d = (r.get("nowtime") or "")[:10]
+            if not d or d < cutoff:
+                continue
+            item, vendor, name, size_text, brand = p
+            price = units.money(r.get("current_price"))
+            up = _unit_price(price, item, name, size_text)
+            if not plausible(item, up):
+                yield None
+                continue
+            yield r.get("product_id"), d, price, up, r
+
+    # pass 1: coverage and typical price per product, by month (relative to the newest data)
+    stat, dropped, n, newest = {}, 0, 0, ""
+    for x in rows():
+        if x is None:
             dropped += 1
+            continue
+        pid, d, price, up, r = x
+        m = stat.setdefault(pid, {}).setdefault(d[:7], [0, 0.0])
+        m[0] += 1
+        m[1] += up
+        newest = max(newest, d)
+        n += 1
+    log(f"  pass 1: {n} plausible daily rows, {dropped} dropped as implausible unit prices; newest {newest}")
+    nd = dt.date.fromisoformat(newest) if newest else today
+    months = {(nd - dt.timedelta(days=k)).isoformat()[:7] for k in range(0, recent_days, 15)}
+    groups = {}
+    for pid, bym in stat.items():
+        cnt = sum(v[0] for k, v in bym.items() if k in months)
+        if not cnt:
+            continue
+        tot = sum(v[1] for k, v in bym.items() if k in months)
+        item, vendor = prods[pid][0], prods[pid][1]
+        groups.setdefault((item["id"], vendor), []).append((cnt, tot / cnt, pid))
+    chosen = {}
+    for k, lst in groups.items():
+        top = max(c for c, _, _ in lst)
+        stable = [x for x in lst if x[0] >= 0.4 * top]
+        for c, avg, pid in sorted(stable, key=lambda x: x[1])[:basket]:
+            chosen[pid] = k
+    log(f"  basket: {len(chosen)} stable products across {len(groups)} item-chain pairs")
+
+    # pass 2: daily prices of basket products, sizes for shrinkflation
+    daily_ = {}   # pid -> {date: (up, was_up, price)}
+    sizes = {}
+    for x in rows():
+        if x is None:
+            continue
+        pid, d, price, up, r = x
+        item, vendor, name, size_text, brand = prods[pid]
+        s_ = _size_from_ppu(price, r.get("price_per_unit"))
+        if s_:
+            h = sizes.setdefault(pid, [])
+            if not h or abs(h[-1][1] - s_) / max(h[-1][1], 1e-9) > 0.02:
+                h.append((d, s_, price))
+        if pid not in chosen:
             continue
         was = units.money(r.get("old_price"))
         wup = _unit_price(was, item, name, size_text) if was and price and was > price else None
         if wup and not plausible(item, wup):
             wup = None
-        k = (item["id"], vendor, d)
-        latest.setdefault((item["id"], vendor), {})[name] = (d, up, price, size_text)
-        cur = agg.get(k)
-        if cur is None or up < cur[0]:
-            agg[k] = [up, wup]
-        s = _size_from_ppu(price, r.get("price_per_unit"))
-        if s:
-            h = sizes.setdefault(pid, [])
-            if not h or abs(h[-1][1] - s) / max(h[-1][1], 1e-9) > 0.02:
-                h.append((d, s, price))
-        n += 1
-    log(f"  {n} matched daily price rows, {dropped} dropped as implausible unit prices")
-    audit = {}
-    for (iid, v), names in latest.items():
-        last_day = max(x[0] for x in names.values())
-        cur = sorted((x[1], nm, x[2], x[3]) for nm, x in names.items() if x[0] == last_day)
-        audit.setdefault(iid, {})[v] = [{"unit_price": round(u, 4), "name": nm, "price": p, "units": un} for u, nm, p, un in cur[:3]]
+        daily_.setdefault(pid, {})[d] = (up, wup, price)
+
+    agg, audit = {}, {}
+    by_group = {}
+    for pid, k in chosen.items():
+        if pid in daily_:
+            by_group.setdefault(k, []).append(pid)
+    for (iid, vendor), pids in by_group.items():
+        days = sorted({d for pid in pids for d in daily_[pid]})
+        if not days:
+            continue
+        d0, d1 = dt.date.fromisoformat(days[0]), dt.date.fromisoformat(days[-1])
+        last = {pid: None for pid in pids}
+        for j in range((d1 - d0).days + 1):
+            d = (d0 + dt.timedelta(days=j)).isoformat()
+            best = None
+            for pid in pids:
+                v = daily_[pid].get(d)
+                if v:
+                    last[pid] = (j, v)
+                lv = last[pid]
+                if lv and j - lv[0] <= 7 and (best is None or lv[1][0] < best[0]):
+                    best = lv[1]
+            if best:
+                agg[(iid, vendor, d)] = [best[0], best[1]]
+        cur = []
+        for pid in pids:
+            dd = max(daily_[pid])
+            up, _, price = daily_[pid][dd]
+            cur.append({"unit_price": round(up, 4), "name": prods[pid][2], "price": price, "units": prods[pid][3], "last_seen": dd})
+        audit.setdefault(iid, {})[vendor] = sorted(cur, key=lambda c: c["unit_price"])
     return _series(agg), _shrink(sizes, prods), audit
 
 

@@ -62,10 +62,12 @@ def parse(zip_path, geos=("Canada", "Ontario"), months=36):
         up = units.unit_price(v, it["unit"], prod, "", post)
         if up is None:
             continue
-        s = out.setdefault(it["id"], {}).setdefault(geo, {"product": prod, "m": {}})
+        s = out.setdefault(it["id"], {}).setdefault(geo, {"product": prod, "m": {}, "raw": {}})
         s["m"][r["REF_DATE"][:7]] = round(up, 4)
+        s["raw"][r["REF_DATE"][:7]] = v
     for it, geos_ in out.items():
         for g, s in geos_.items():
             ks = sorted(s["m"])[-months:]
             s["m"] = {k: s["m"][k] for k in ks}
+            s["raw"] = {k: s["raw"][k] for k in ks if k in s["raw"]}
     return out

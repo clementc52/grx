@@ -80,6 +80,16 @@ td{padding:6px;border-bottom:1px solid var(--line);vertical-align:top}
 .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px}
 .card{border:1px solid var(--line);border-radius:10px;padding:16px;background:var(--panel)}
 .empty{padding:28px 12px;color:var(--mute);text-align:center}
+.stores{border-bottom:1px solid var(--line);padding-top:16px;padding-bottom:16px}
+.sbar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.sbar b{font-size:16px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.chip{min-height:36px;padding:0 12px;border:1px solid var(--line);border-radius:18px;font-weight:600;font-size:14px;background:var(--bg);color:var(--ink)}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip span{font-weight:400;opacity:.7;margin-left:4px}
+.btn2{min-height:36px;font-size:13px;border-width:1px}
+.snip{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;font-size:13px}
+.snip code{background:var(--panel);border:1px solid var(--line);padding:6px 8px;border-radius:6px;overflow-wrap:anywhere}
 .foot{font-size:13px;color:var(--mute);border-top:1px solid var(--line)}
 .foot p{max-width:80ch}
 @media(max-width:1100px){.desk{grid-template-columns:minmax(0,1fr)}.detail{position:static}}
@@ -98,6 +108,21 @@ td{padding:6px;border-bottom:1px solid var(--line);vertical-align:top}
     <p class="mu" id="sub" style="margin:8px 0 0">Real flyer, shelf and official prices, checked every hour.</p>
   </div>
   <div class="tally" id="tally"></div>
+</section>
+
+<section class="band stores" id="stores">
+  <div class="sbar">
+    <b id="scount">All stores</b>
+    <button class="btn2" id="pick" aria-expanded="false">Choose your stores</button>
+    <button class="btn2" data-preset="disc">Discounters</button>
+    <button class="btn2" data-preset="asian">Asian grocers</button>
+    <button class="btn2" data-preset="all">All stores</button>
+  </div>
+  <div id="picker" hidden>
+    <label for="sfind" style="margin-top:12px;max-width:320px">Find a store<input id="sfind" type="search" placeholder="T&amp;T, No Frills…"></label>
+    <div class="chips" id="chips"></div>
+    <div class="snip"><span>Make phone alerts use these stores too: copy this line into</span><a id="cfg" href="#">config.json</a><code id="snip"></code><button class="btn2" id="copy">Copy</button></div>
+  </div>
 </section>
 
 <main class="band desk">
@@ -134,25 +159,62 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 const m2=v=>'$'+(+v).toFixed(2);
 const pc=v=>(v>=0?'+':'−')+Math.abs(v*100).toFixed(0)+'%';
 const PAL=['#d7141a','#1f5fbf','#0b7a3b','#8a4bd6','#e07b00','#00838f','#6d4c41','#c2185b','#455a64'];
-let B=null,H={},sel=null;
+let B=null,H={},sel=null,MINE=null,V2C={};
+const DISC=['No Frills','Food Basics','FreshCo','Walmart','Giant Tiger','Real Canadian Superstore','Wholesale Club'];
+const ASIAN=['T&T','H Mart','Galleria','Btrust Supermarket','Oceans Fresh Food Market','Foody Mart','Bestco Foodmart','Winco Food Mart','Seasons Food Mart','Tone Tai Supermarket','Skyland Food Mart','Food Depot Supermarket','Al Premium Food Mart','Terra Foodmart','Moonlight Grocers','Starsky'];
+const has=c=>!MINE||MINE.has(c);
+const OTHER=/healthy planet|london drugs|well\.ca|staples|ren's pets|shoppers drug|rexall|canadian tire|pharmasave|nature's source|amazon|best buy|petsmart|pet valu|dollarama/i;
+const saveMine=()=>{try{localStorage.setItem('grx-stores',JSON.stringify(MINE?[...MINE]:null))}catch(e){}};
+function fmtU(it,x){return '$'+(x*it.show).toFixed(2)+' '+it.show_label}
+function callJS(it,vendors,offers){
+  const cands=offers.filter(o=>!(o.pack&&o.pack>4*it.show)).map(o=>[o.unit_price,o.merchant,o.kind]);
+  const shelf=vendors.filter(v=>v.src==='shelf');
+  shelf.filter(v=>v.now&&(v.stale_days||0)<=5).forEach(v=>cands.push([v.now,v.v,'shelf']));
+  if(!cands.length)return{action:'NO DATA',reason:'None of your stores has a current price for this.'};
+  cands.sort((a,b)=>a[0]-b[0]);const [best,where,kind]=cands[0],f=x=>fmtU(it,x);
+  const fut=shelf.filter(v=>v.exp&&v.p14!=null&&!v.on_sale).map(v=>[v.p14*v.exp+(1-v.p14)*v.now,v.exp,v.p14,v.v]).sort((a,b)=>a[0]-b[0]);
+  const mn=a=>a.length?Math.min(...a):null,low90=mn(shelf.filter(v=>v.lo90).map(v=>v.lo90)),med90=mn(shelf.filter(v=>v.med90).map(v=>v.med90));
+  const gap=mn(shelf.filter(v=>v.gap).map(v=>v.gap))||28,cover=Math.min(it.shelf,gap*1.15),qty=Math.max(1,Math.ceil(cover/it.use));
+  const r={best,where,kind,low90,med90};
+  if(fut.length){const [,exp,p14,v]=fut[0],sv=1-exp/best;if(p14>=.5&&sv>=.08)return{...r,action:'WAIT',reason:`${v} has a ${Math.round(p14*100)}% chance of a sale within 14 days at about ${f(exp)}, ${Math.round(sv*100)}% under today's best (${f(best)} at ${where}).`}}
+  if(low90&&best<=low90*1.03&&(med90==null||best<=med90*.92))return{...r,action:'STOCK UP',qty,reason:`${f(best)} at ${where} is at the 90-day low for your stores. It keeps about ${it.shelf} days and the next comparable sale is ~${Math.round(gap)} days out, so buy ${qty} × ${it.show_label.replace('per ','')}.`};
+  if(low90&&best>low90*1.15)return{...r,action:'BUY ONLY IF NEEDED',reason:`Best at your stores today is ${f(best)} at ${where}, ${Math.round((best/low90-1)*100)}% above its 90-day low (${f(low90)}), and no sale is clearly due. Buy what you need, not more.`};
+  return{...r,action:'BUY',reason:`${f(best)} at ${where} is a fair price for your stores and no deeper sale looks imminent.`};
+}
+function view(it){
+  const offers=it.offers.filter(o=>has(o.chain)),vendors=it.vendors.filter(v=>has(v.chain));
+  return{...it,offers,vendors,call:callJS(it,vendors,offers),n_offers:offers.length};
+}
+let VIEW=[];
+function recompute(){VIEW=B.items.map(view);storesBar();header();board();detail();lists()}
+function storesBar(){
+  const n=B.chains.length,k=MINE?B.chains.filter(c=>MINE.has(c.name)).length:n;
+  $('#scount').textContent=MINE?`Showing ${k} of ${n} stores`:`Showing all ${n} stores`;
+  const q=($('#sfind').value||'').toLowerCase();
+  const chip=c=>`<button class="chip${has(c.name)&&MINE?' on':''}" data-c="${esc(c.name)}" aria-pressed="${has(c.name)&&!!MINE}">${esc(c.name)}<span>${c.offers||'history'}</span></button>`;
+  const vis=B.chains.filter(c=>!q||c.name.toLowerCase().includes(q)),g=vis.filter(c=>!OTHER.test(c.name)),o=vis.filter(c=>OTHER.test(c.name));
+  $('#chips').innerHTML=g.map(chip).join('')+(o.length?`<div class="mu sm" style="flex-basis:100%;margin-top:8px">Online shops, pharmacies and others</div>`+o.map(chip).join(''):'');
+  const list=MINE?[...MINE]:[];$('#snip').textContent=`"my_stores": ${JSON.stringify(list)},`;
+  $('#cfg').href=`https://github.com/${B.repo||'clementc52/grx'}/edit/main/config.json`;
+}
 const callCls=a=>'c-'+(a||'NO').split(' ')[0]+(a==='BUY ONLY IF NEEDED'?'ONLY':'');
 
 function ago(iso){if(!iso)return'never';const m=(Date.now()-Date.parse(iso))/6e4;return m<90?Math.round(m)+' min ago':m<2880?Math.round(m/60)+' h ago':Math.round(m/1440)+' days ago'}
 function header(){
   const s=B.sources;$('#where').textContent=`${B.home.label||B.home.fsa} · ${B.home.radius_km} km radius`;
   $('#fresh').textContent=`Flyers ${ago(s.flipp.at)} · ${s.flipp.rows.toLocaleString()} live prices from ${s.flipp.merchants} stores${s.hammer&&s.hammer.last_load?' · shelf history to '+String(s.hammer.last_load).slice(0,10):''}`;
-  const n=a=>B.items.filter(i=>i.call.action===a).length;
-  const top=B.items.filter(i=>i.call.action==='STOCK UP').map(i=>i.label.toLowerCase());
+  const n=a=>VIEW.filter(i=>i.call.action===a).length;
+  const top=VIEW.filter(i=>i.call.action==='STOCK UP').map(i=>i.label.toLowerCase());
   $('#headline').textContent=top.length?`Stock up on ${top.slice(0,3).join(', ')}${top.length>3?' and '+(top.length-3)+' more':''} this week`:'Nothing at a 90-day low this week: buy what you need';
-  $('#sub').textContent=`${B.items.length} groceries tracked across every store within ${B.home.radius_km} km of ${B.home.label||B.home.fsa}. Updated ${ago(B.generated)}.`;
+  $('#sub').textContent=`${B.items.length} groceries tracked across ${MINE?'your '+MINE.size+' chosen stores':'every store'} within ${B.home.radius_km} km of ${B.home.label||B.home.fsa}. Updated ${ago(B.generated)}.`;
   $('#tally').innerHTML=[['STOCK UP','Stock up'],['WAIT','Wait'],['BUY','Buy'],['BUY ONLY IF NEEDED','Overpriced']].map(([a,l])=>`<div><b>${n(a)}</b><span>${l}</span></div>`).join('');
-  const cats=[...new Set(B.items.map(i=>i.cat))];$('#cat').innerHTML='<option value="">All aisles</option>'+cats.map(c=>`<option>${esc(c)}</option>`).join('');
+  if($('#cat').options.length<2){const cats=[...new Set(B.items.map(i=>i.cat))];$('#cat').innerHTML='<option value="">All aisles</option>'+cats.map(c=>`<option>${esc(c)}</option>`).join('')}
 }
 function bestOdds(it){const v=it.vendors.filter(v=>v.p14!=null);if(!v.length)return null;return v.reduce((a,b)=>b.p14>a.p14?b:a)}
 function board(){
   const q=$('#q').value.trim().toLowerCase(),c=$('#cat').value,a=$('#act').value;
   const order={'STOCK UP':0,'WAIT':1,'BUY':2,'BUY ONLY IF NEEDED':3,'NO DATA':4};
-  const all=B.items.filter(i=>(!q||i.label.toLowerCase().includes(q)||i.id.includes(q))&&(!c||i.cat===c)&&(!a||i.call.action===a)).sort((x,y)=>order[x.call.action]-order[y.call.action]||x.label.localeCompare(y.label));
+  const all=VIEW.filter(i=>(!q||i.label.toLowerCase().includes(q)||i.id.includes(q))&&(!c||i.cat===c)&&(!a||i.call.action===a)).sort((x,y)=>order[x.call.action]-order[y.call.action]||x.label.localeCompare(y.label));
   const items=all.filter(i=>i.call.action!=='NO DATA'),waiting=all.filter(i=>i.call.action==='NO DATA');
   $('#board').innerHTML=items.length?items.map(it=>{
     const k=it.call,o=bestOdds(it),lo=k.low90,hi=Math.max(...it.vendors.filter(v=>v.hi90).map(v=>v.hi90),0);
@@ -168,13 +230,13 @@ function board(){
 function tag(v){const [d,c]=(+v).toFixed(2).split('.');return `<span class="c">$</span><span class="d">${d}</span><sup>${c}</sup>`}
 function verdictChip(v){if(!v)return'';const cls=v.tag==='Not really a sale'?'v-bad':v.tag==='Normal sale'?'v-meh':'v-good';return `<span class="v ${cls}" title="vs this chain's 90-day median">${esc(v.tag)} ${pc(v.vs_median)}</span>`}
 function detail(){
-  const it=B.items.find(i=>i.id===sel);if(!it)return;
+  const it=VIEW.find(i=>i.id===sel);if(!it)return;
   const k=it.call,s=it.statcan;
   const offers=it.offers.map(o=>`<tr><td>${esc(o.merchant)}<div class="mu sm">${esc(o.name)}${o.story?' · '+esc(o.story):''}</div></td><td class="r">${o.km!=null?o.km+' km':''}</td><td class="r"><b>${o.assumed?'~':''}${m2(o.unit_price*it.show)}</b><div class="mu sm">${o.pre?esc(o.pre)+' ':''}${m2(o.price)}${o.post?' '+esc(o.post):''}</div></td><td>${o.bulk?'<span class="v v-meh">bulk pack</span> ':''}${o.kind==='online'?'<span class="v v-meh">online</span>':verdictChip(o.verdict)}</td></tr>`).join('');
   const vend=it.vendors.map(v=>`<tr><td>${esc(v.v)}<div class="mu sm">${v.src==='flyer'?'from flyer history':v.on_sale?'on sale now':'regular price'}</div></td><td class="r">${v.now?m2(v.now*it.show):v.lo_seen?'low '+m2(v.lo_seen*it.show):''}</td><td class="r">${[7,14,28].map(h=>v['p'+h]!=null?Math.round(v['p'+h]*100)+'%':'–').join(' / ')}</td><td class="r">${v.gap?'~'+Math.round(v.gap)+' d':''}</td><td class="r">${v.exp?m2(v.exp*it.show):''}</td></tr>`).join('');
   $('#detail').innerHTML=`<div class="dh"><div><h2 style="margin:0">${esc(it.label)}</h2><div class="mu sm">${esc(it.show_label)} · ${esc(it.cat)}</div></div>${k.best?`<div class="tag">${tag(k.best*it.show)}</div>`:''}</div>
     <p class="why"><span class="call ${callCls(k.action)}">${esc(k.action)}</span> ${esc(k.reason)}</p>
-    ${s?`<p class="sm mu">StatCan ${esc(s.geo)} average for ${esc(s.month)}: <b style="color:var(--ink)">${m2(s.avg*it.show)}</b> ${esc(it.show_label)}${s.yoy!=null?` (${pc(s.yoy)} over 12 months)`:''}${k.best?`. Best price here is ${pc(k.best/s.avg-1)} vs that average.`:''}</p>`:''}
+    ${s?`<p class="sm mu">Official benchmark: StatCan ${esc(s.geo)} average for ${esc(s.month)}, ${esc(s.product)}: <b style="color:var(--ink)">${s.raw!=null?m2(s.raw):m2(s.avg*it.show)}</b>${s.yoy!=null?` (${pc(s.yoy)} over 12 months)`:''}.</p>`:''}
     <div class="fig"><canvas id="cv"></canvas></div><div class="leg" id="leg"></div>
     <div class="calc"><label for="use">One ${esc(it.show_label.replace('per ',''))} lasts you (days)<input id="use" type="number" min="1" value="${it.use}"></label><div><div class="mu sm">Buy at this price</div><output id="qty"></output></div></div>
     <h3>Every price this week, cheapest first</h3><div class="scroll"><table><thead><tr><th>Store</th><th class="r">From you</th><th class="r">${esc(it.show_label)}</th><th>Deal check</th></tr></thead><tbody>${offers||'<tr><td colspan="4" class="empty">No live prices in range yet.</td></tr>'}</tbody></table></div>
@@ -185,8 +247,8 @@ function detail(){
 function draw(it){
   const cv=$('#cv');if(!cv)return;const W=cv.clientWidth,Ht=cv.clientHeight,dpr=devicePixelRatio||1;cv.width=W*dpr;cv.height=Ht*dpr;
   const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);const cs=getComputedStyle(document.body),ink=cs.color,mute=getComputedStyle($('.mu')||document.body).color;
-  const h=H[it.id]||{},vs=Object.keys(h);const leg=$('#leg');
-  if(!vs.length){x.fillStyle=mute;x.font='14px Archivo, sans-serif';x.fillText('Shelf-price history appears after the first daily history load.',10,30);leg.innerHTML='';return}
+  const h=H[it.id]||{},vs=Object.keys(h).filter(v=>has(V2C[v]||v));const leg=$('#leg');
+  if(!vs.length){x.fillStyle=mute;x.font='14px Archivo, sans-serif';x.fillText(MINE?'No daily shelf history for your chosen stores.':'Shelf-price history appears after the first daily history load.',10,30);leg.innerHTML='';return}
   const day=s=>Date.parse(s)/864e5;let t0=1e9,t1=-1e9,lo=1e9,hi=-1e9;
   const S=vs.map(v=>{const e=h[v],d0=day(e.d0);const pts=e.p.map((p,i)=>p==null?null:[d0+i,p*it.show]);pts.forEach(q=>{if(q){t0=Math.min(t0,q[0]);t1=Math.max(t1,q[0]);lo=Math.min(lo,q[1]);hi=Math.max(hi,q[1])}});return{v,pts}});
   const off=it.offers.filter(o=>o.kind==='flyer').slice(0,12);off.forEach(o=>{lo=Math.min(lo,o.unit_price*it.show);hi=Math.max(hi,o.unit_price*it.show)});
@@ -203,18 +265,30 @@ function draw(it){
   leg.innerHTML=S.map((s,i)=>`<span><i style="background:${PAL[i%PAL.length]}"></i>${esc(s.v)}</span>`).join('')+(off.length?`<span><i style="background:var(--ink);height:7px;width:7px;border-radius:50%"></i>this week's flyers</span>`:'');
 }
 function lists(){
-  $('#match').innerHTML=B.match.length?`<div class="scroll"><table><thead><tr><th>At</th><th>Item</th><th class="r">Match to</th></tr></thead><tbody>${B.match.slice(0,25).map(m=>`<tr><td>${esc(m.at)}</td><td>${esc(m.label)}<div class="mu sm">${esc(m.merchant)}: ${esc(m.name)}</div></td><td class="r"><b>${m2(m.unit_price*m.show)}</b><div class="mu sm">${m.own?'theirs '+m2(m.own*m.show):'not in their flyer'}</div></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">No matchable flyer prices this week.</div>';
-  $('#shrink').innerHTML=B.shrink.length?`<div class="scroll"><table><thead><tr><th>Product</th><th class="r">Size</th><th class="r">Hidden hike</th></tr></thead><tbody>${B.shrink.slice(0,15).map(s=>`<tr><td>${esc(s.name)}<div class="mu sm">${esc(s.vendor)} · ${esc(s.date)}</div></td><td class="r">${Math.round(s.size_before)} → ${Math.round(s.size_after)}</td><td class="r" style="color:var(--dn)"><b>${pc(s.hidden_increase)}</b></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">None detected in the tracked products.</div>';
+  const MT=B.match.filter(m=>has(m.at));
+  $('#match').innerHTML=MT.length?`<div class="scroll"><table><thead><tr><th>At</th><th>Item</th><th class="r">Match to</th></tr></thead><tbody>${MT.slice(0,25).map(m=>`<tr><td>${esc(m.at)}</td><td>${esc(m.label)}<div class="mu sm">${esc(m.merchant)}: ${esc(m.name)}</div></td><td class="r"><b>${m2(m.unit_price*m.show)}</b><div class="mu sm">${m.own?'theirs '+m2(m.own*m.show):'not in their flyer'}</div></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">No matchable flyer prices this week.</div>';
+  const SH=B.shrink.filter(x=>has(V2C[x.vendor]||x.vendor));
+  $('#shrink').innerHTML=SH.length?`<div class="scroll"><table><thead><tr><th>Product</th><th class="r">Size</th><th class="r">Hidden hike</th></tr></thead><tbody>${SH.slice(0,15).map(s=>`<tr><td>${esc(s.name)}<div class="mu sm">${esc(s.vendor)} · ${esc(s.date)}</div></td><td class="r">${Math.round(s.size_before)} → ${Math.round(s.size_after)}</td><td class="r" style="color:var(--dn)"><b>${pc(s.hidden_increase)}</b></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">None detected in the tracked products.</div>';
   const lab=id=>(B.items.find(i=>i.id===id)||{}).label||id;
-  $('#lock').innerHTML=B.lockstep.length?`<div class="scroll"><table><thead><tr><th>Item</th><th>Chains</th><th class="r">Together / chance</th></tr></thead><tbody>${B.lockstep.slice(0,15).map(l=>`<tr><td>${esc(lab(l.item))}</td><td>${esc(l.a)} + ${esc(l.b)}</td><td class="r"><b>${l.co_moves}</b> / ${l.expected}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">No repeated lockstep hikes found.</div>';
+  const LK=B.lockstep.filter(l=>has(V2C[l.a]||l.a)||has(V2C[l.b]||l.b));
+  $('#lock').innerHTML=LK.length?`<div class="scroll"><table><thead><tr><th>Item</th><th>Chains</th><th class="r">Together / chance</th></tr></thead><tbody>${LK.slice(0,15).map(l=>`<tr><td>${esc(lab(l.item))}</td><td>${esc(l.a)} + ${esc(l.b)}</td><td class="r"><b>${l.co_moves}</b> / ${l.expected}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">No repeated lockstep hikes found.</div>';
 }
 function pick(id){sel=id;history.replaceState(null,'','#'+id);board();detail();if(innerWidth<1100)$('#detail').scrollIntoView({behavior:'smooth'})}
 $('#board').addEventListener('click',e=>{const r=e.target.closest('.row');if(r)pick(r.dataset.id)});
+$('#pick').addEventListener('click',()=>{const p=$('#picker');p.hidden=!p.hidden;$('#pick').setAttribute('aria-expanded',String(!p.hidden));$('#pick').textContent=p.hidden?'Choose your stores':'Done'});
+$('#sfind').addEventListener('input',storesBar);
+$('#chips').addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;const n=c.dataset.c;if(!MINE)MINE=new Set();MINE.has(n)?MINE.delete(n):MINE.add(n);if(!MINE.size)MINE=null;saveMine();recompute()});
+document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{const p=b.dataset.preset;MINE=p==='all'?null:new Set((p==='disc'?DISC:ASIAN).filter(n=>B.chains.some(c=>c.name===n)));saveMine();recompute()}));
+$('#copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('#snip').textContent);$('#copy').textContent='Copied'}catch(e){$('#copy').textContent='Select and copy'}});
 for(const id of ['#q','#cat','#act'])$(id).addEventListener('input',board);
-const ro=new ResizeObserver(()=>{const it=B&&B.items.find(i=>i.id===sel);if(it)draw(it)});ro.observe($('#detail'));
+const ro=new ResizeObserver(()=>{const it=B&&VIEW.find(i=>i.id===sel);if(it)draw(it)});ro.observe($('#detail'));
 Promise.all([fetch('data/board.json',{cache:'no-store'}).then(r=>r.json()),fetch('data/hist.json',{cache:'no-store'}).then(r=>r.json()).catch(()=>({}))]).then(([b,h])=>{
-  B=b;H=h;header();const first=(location.hash.slice(1)&&B.items.find(i=>i.id===location.hash.slice(1)))||B.items.find(i=>i.call.action==='STOCK UP')||B.items.find(i=>i.n_offers)||B.items[0];
-  sel=first&&first.id;board();detail();lists();
+  B=b;H=h;B.chains=B.chains||[];B.items.forEach(i=>i.vendors.forEach(v=>V2C[v.v]=v.chain));
+  let saved=null;try{saved=JSON.parse(localStorage.getItem('grx-stores')||'null')}catch(e){}
+  MINE=saved?new Set(saved):(B.my_stores&&B.my_stores.length?new Set(B.my_stores):null);
+  VIEW=B.items.map(view);
+  const first=(location.hash.slice(1)&&VIEW.find(i=>i.id===location.hash.slice(1)))||VIEW.find(i=>i.call.action==='STOCK UP')||VIEW.find(i=>i.n_offers)||VIEW[0];
+  sel=first&&first.id;recompute();
 }).catch(()=>{$('#board').innerHTML='<div class="empty">No data yet. The first collection run publishes it within the hour.</div>';$('#where').textContent='Waiting for the first collection run'});
 }
 </script>

@@ -187,7 +187,9 @@ def call(item, vendors, offers):
             res.update(action="WAIT", p14=p14, exp=exp, exp_where=v,
                        reason=f"{v} has a {p14:.0%} chance of a sale within 14 days at about {fmt(exp)}, {saving:.0%} under today's best ({fmt(best_now)} at {where}).")
             return res
-    if low90 and best_now <= low90 * 1.03:
+    meds = [v["med90"] for v in vendors if v.get("med90")]
+    med90 = min(meds) if meds else None
+    if low90 and best_now <= low90 * 1.03 and (med90 is None or best_now <= med90 * 0.92):
         res.update(action="STOCK UP", qty=qty,
                    reason=f"{fmt(best_now)} at {where} is at the 90-day low. It keeps about {item['shelf']} days and the next comparable sale is ~{gap:.0f} days out, so buy {qty} × {label.replace('per ', '')}.")
         return res

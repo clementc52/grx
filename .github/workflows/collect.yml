@@ -5,10 +5,11 @@ on:
     - cron: "17 * * * *"     # hourly: home-area flyers + online prices
     - cron: "47 */6 * * *"   # every 6 h: full radius sweep
     - cron: "33 11 * * *"    # daily: shelf-price history + StatCan
+    - cron: "7 4-7 * * 4"    # Thursday 11 pm-2 am Toronto: new weekly flyers go live, sweep the radius every hour
   workflow_dispatch:
     inputs:
       job:
-        description: "light | full | daily | all"
+        description: "light | full | daily | all | test-push"
         default: "all"
 
 permissions:
@@ -44,6 +45,7 @@ jobs:
           S="${{ github.event.schedule }}"; J="${{ github.event.inputs.job }}"
           full=false; daily=false
           [ "$S" = "47 */6 * * *" ] && full=true
+          [ "$S" = "7 4-7 * * 4" ] && full=true
           [ "$S" = "33 11 * * *" ] && daily=true
           [ "$J" = "full" ] && full=true
           [ "$J" = "daily" ] && daily=true
@@ -66,7 +68,13 @@ jobs:
       - name: Alerts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
         run: python -m grx.run alerts
+      - name: Test phone push
+        if: github.event.inputs.job == 'test-push'
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python -m grx.run test-push
       - name: Save working state
         uses: actions/cache/save@v4
         with:

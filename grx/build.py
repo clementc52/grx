@@ -7,6 +7,7 @@ import re
 
 from . import analytics as A
 from .catalog import BY_ID, ITEMS, PRIVATE_LABELS, match, plausible
+from .chains import chain
 
 ALIAS = {"ttsupermarket": "tandt", "tt": "tandt", "tandtsupermarket": "tandt", "galleriasupermarket": "galleria",
          "saveonfoods": "saveonfoods", "sobeys": "voila", "voilabysobeys": "voila", "realcanadiansuperstore": "superstore",
@@ -102,7 +103,7 @@ def build(root=".", today=None, cfg=None):
             if iid != it["id"]:
                 continue
             o = A.odds(a, curves.get(it["cat"]))
-            vendors.append({"v": v, "src": "shelf", "now": a["now"], "reg": a["reg"], "on_sale": a["on_sale"],
+            vendors.append({"v": v, "chain": chain(v), "src": "shelf", "now": a["now"], "reg": a["reg"], "on_sale": a["on_sale"],
                             "stale_days": a["stale_days"], "p7": o[7], "p14": o[14], "p28": o[28],
                             "exp": (a["reg"] * a["depth"]) if a["depth"] else None, "lo90": a["lo90"],
                             "med90": a["med90"], "hi90": a["hi90"], "n_sales": a["n_sales"],
@@ -112,17 +113,19 @@ def build(root=".", today=None, cfg=None):
                 continue
             a = {"gaps": fc["gaps"], "since": fc["since"]}
             o = A.odds(a, curves.get(it["cat"]))
-            vendors.append({"v": m, "src": "flyer", "p7": o[7], "p14": o[14], "p28": o[28], "n_sales": fc["appearances"],
+            vendors.append({"v": m, "chain": chain(m), "src": "flyer", "p7": o[7], "p14": o[14], "p28": o[28], "n_sales": fc["appearances"],
                             "lo_seen": fc["low"], "gap": A.median_gap(a, pooled.get(it["cat"]))})
-        shelf = [v for v in vendors if v["src"] == "shelf"]
-        c = A.call(it, shelf, offers)
+        mine = set(cfg.get("my_stores") or [])
+        shelf = [v for v in vendors if v["src"] == "shelf" and (not mine or v["chain"] in mine)]
+        c = A.call(it, shelf, [o for o in offers if not mine or chain(o["merchant"]) in mine])
         hv = {norm(v["v"]): (v["v"], anal[(it["id"], v["v"])]) for v in shelf}
         offs = []
-        for r in offers[:30]:
+        for r in offers[:80]:
             h = hv.get(norm(r["merchant"]))
             o = {k: r.get(k) for k in ("merchant", "name", "price", "unit_price", "kind", "story", "valid_to", "km", "fsa", "pre", "post", "was", "assumed", "pack")}
             o["bulk"] = bool(r.get("pack") and r["pack"] > 4 * it["show"])
             o["verdict"] = A.verdict(r["unit_price"], h[1]) if h else None
+            o["chain"] = chain(r["merchant"])
             offs.append(o)
         sc = stat.get(it["id"], {})
         base = sc.get("Ontario") or sc.get("Canada")
@@ -130,6 +133,7 @@ def build(root=".", today=None, cfg=None):
         if base and base["m"]:
             mo = sorted(base["m"])[-1]
             statline = {"geo": "Ontario" if "Ontario" in sc else "Canada", "month": mo, "avg": base["m"][mo],
+                        "raw": (base.get("raw") or {}).get(mo),
                         "yoy": round(base["m"][mo] / base["m"][sorted(base["m"])[-13]] - 1, 3) if len(base["m"]) >= 13 else None,
                         "product": base["product"]}
         items_out.append({"id": it["id"], "label": it["label"], "cat": it["cat"], "unit": it["unit"], "show": it["show"],
@@ -147,11 +151,16 @@ def build(root=".", today=None, cfg=None):
                 b = comp[0]
                 o_best = own[0]["unit_price"] if own else None
                 if o_best is None or b["unit_price"] < o_best * 0.97:
-                    match_plan.append({"item": it["id"], "label": it["label"], "at": mstore, "show": it["show"],
+                    match_plan.append({"chain": chain(b["merchant"]), "item": it["id"], "label": it["label"], "at": mstore, "show": it["show"],
                                        "show_label": it["show_label"], "merchant": b["merchant"], "name": b["name"],
                                        "price": b["price"], "unit_price": b["unit_price"], "valid_to": b.get("valid_to"),
                                        "own": o_best})
     merchants = sorted({r["merchant"] for r in live})
+    cc = {}
+    for r in live:
+        cc[chain(r["merchant"])] = cc.get(chain(r["merchant"]), 0) + 1
+    for (iid, v) in anal:
+        cc.setdefault(chain(v), 0)
     board = {
         "generated": dt.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"), "today": tday,
         "home": {"label": cfg.get("home_label", ""), "fsa": cfg.get("home_fsa"), "radius_km": radius},
@@ -160,6 +169,8 @@ def build(root=".", today=None, cfg=None):
                     "hammer": hmeta, "statcan": {"items": len(stat)}},
         "items": items_out, "shrink": shrink[:60], "lockstep": A.lockstep(series),
         "match": sorted(match_plan, key=lambda m: m["at"]), "merchants": merchants,
+        "chains": sorted(({"name": k, "offers": v} for k, v in cc.items()), key=lambda x: -x["offers"]),
+        "my_stores": cfg.get("my_stores") or [], "repo": cfg.get("repo", ""),
     }
     os.makedirs(os.path.join(root, "site/data"), exist_ok=True)
     with open(os.path.join(root, "site/data/board.json"), "w") as f:

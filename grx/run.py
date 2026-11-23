@@ -126,6 +126,19 @@ def gh(method, path, body=None):
         return json.loads(r.read() or b"null")
 
 
+def push(title, body, click=None, topic=None):
+    """Phone push via ntfy.sh: install the ntfy app and subscribe to your topic."""
+    topic = topic or os.environ.get("NTFY_TOPIC") or cfg().get("ntfy_topic")
+    if not topic:
+        return False
+    h = {"Title": title.encode("ascii", "ignore").decode(), "Priority": "high", "Tags": "shopping_cart"}
+    if click:
+        h["Click"] = click
+    req = urllib.request.Request(f"https://ntfy.sh/{topic}", data=body.encode("utf-8"), headers=h, method="POST")
+    with urllib.request.urlopen(req, timeout=20) as r:
+        return r.status == 200
+
+
 def cmd_alerts():
     board = B.load(os.path.join(ROOT, "site/data/board.json"), None)
     if not board:
@@ -134,7 +147,12 @@ def cmd_alerts():
     hits = [h for h in check_rules(board, cfg().get("watch", [])) if h["key"] not in state]
     for h in hits:
         print("ALERT:", h["body"])
-        if os.environ.get("GITHUB_TOKEN"):
+        try:
+            if push(h["title"].replace("GRX alert: ", ""), h["body"], cfg().get("site_url")):
+                print("  pushed to phone")
+        except Exception as e:
+            print("  ! push failed:", e)
+        if os.environ.get("GITHUB_TOKEN") and cfg().get("github_issues", True):
             try:
                 gh("POST", "/issues", {"title": h["title"], "body": h["body"] + "\n\nDashboard: see the Pages site for this repo.", "labels": ["alert"]})
             except Exception as e:
@@ -161,6 +179,10 @@ def main(argv):
         return 0
     if c == "alerts":
         return cmd_alerts()
+    if c == "test-push":
+        ok = push("GRX test", "Phone alerts work. You'll get a push like this when a watched grocery hits your line.", cfg().get("site_url"))
+        print("pushed" if ok else "no ntfy topic configured (add the NTFY_TOPIC repo secret)")
+        return 0
     print(__doc__)
     return 2
 
