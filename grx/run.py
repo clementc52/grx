@@ -45,7 +45,13 @@ def cmd_flipp(full):
     hist = os.path.join(ROOT, f"data/flipp/{month}.jsonl")
     os.makedirs(os.path.dirname(hist), exist_ok=True)
     old = B.load(os.path.join(ROOT, "data/flipp/latest.json"), {"rows": []})
-    seen = {(r["item"], r["kind"], r["merchant"], r["name"], r["price"], r.get("valid_from")) for r in old["rows"]}
+    seen = set()   # dedupe against this month's log, so each distinct price is logged once
+    if os.path.exists(hist):
+        with open(hist) as f:
+            for l in f:
+                if l.strip():
+                    r = json.loads(l)
+                    seen.add((r["item"], r["kind"], r["merchant"], r["name"], r["price"], r.get("valid_from")))
     new = [r for r in rows if (r["item"], r["kind"], r["merchant"], r["name"], r["price"], r.get("valid_from")) not in seen]
     with open(hist, "a") as f:
         for r in new:
