@@ -87,14 +87,13 @@ def count_of(text, kind):
 
 def per_text_unit(post):
     """Flyer 'post_price_text' like '/lb', 'lb', '/kg', '/100 g', 'ea.' -> multiplier to $/kg or None."""
-    p = (post or "").lower().replace(" ", "")
-    if "/100g" in p or p == "100g":
-        return ("kg", 10.0)
-    if "kg" in p:
-        return ("kg", 1.0)
-    if "lb" in p:
-        return ("kg", 1 / LB)
-    return None
+    p = (post or "").lower().replace(" ", "").lstrip("/$.")
+    # The first unit printed is what the price is for: "lb 13.21/kg" means $/lb.
+    m = re.match(r"(?:ea\.?|each)?/?(100g|lb|kg)", p)
+    if not m:
+        return None
+    u = m.group(1)
+    return ("kg", 10.0) if u == "100g" else ("kg", 1.0) if u == "kg" else ("kg", 1 / LB)
 
 
 def effective_price(current, pre_text=None):
@@ -108,6 +107,23 @@ def effective_price(current, pre_text=None):
         if 1 < n <= 12:
             return c / n
     return c
+
+
+_OR = re.compile(r"\s+(?:or|ou)\s+|\s*/\s*(?=[a-z])", re.I)
+
+
+def segment(name, rx):
+    """'DANONE YOGURT (650g) or NO NAME CREAM CHEESE (227g)' -> the part that matches rx."""
+    parts = [p for p in _OR.split(name or "") if p.strip()]
+    if len(parts) <= 1:
+        return name
+    hits = [p for p in parts if rx.search(p.lower())]
+    if not hits:
+        return name
+    seg = hits[0]
+    # 'PC ORANGE JUICE 2.5 L OR SIGGI'S YOGURT 650/750 G': size belongs to its own segment;
+    # if our segment has no size but another does, the size is ambiguous -> keep only our text.
+    return seg
 
 
 def unit_price(price, unit, name="", size_text="", post_text=""):
@@ -135,5 +151,5 @@ def unit_price(price, unit, name="", size_text="", post_text=""):
         n = count_of(txt, unit)
         return price / n if n else None
     if unit == "each":
-        return price
+        return None if per_text_unit(post_text) else price   # priced by weight: not comparable per item
     return None

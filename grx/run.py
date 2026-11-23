@@ -63,7 +63,7 @@ def cmd_flipp(full):
 def cmd_hammer():
     with tempfile.TemporaryDirectory() as d:
         z = hammer.download(os.path.join(d, "h.zip"))
-        series, shrink = hammer.parse(z, since_days=cfg().get("hammer_days", 730))
+        series, shrink, audit = hammer.parse(z, since_days=cfg().get("hammer_days", 730))
     try:
         with urllib.request.urlopen(hammer.LASTUPDATED, timeout=30) as r:
             last = r.read().decode().strip()[:40]
@@ -72,6 +72,12 @@ def cmd_hammer():
     vendors = sorted({v for s in series.values() for v in s})
     write("data/hammer/series.json", series)
     write("data/hammer/shrink.json", shrink)
+    write("data/audit/hammer_cheapest.json", audit)   # committed: the products behind each shelf price
+    for iid, vs in sorted(audit.items()):
+        for v, xs in sorted(vs.items()):
+            if xs:
+                x = xs[0]
+                print(f"  audit {iid:16} {v:12} {x['unit_price']:9.4f}  {x['price']}  [{x['units']}] {x['name'][:70]}")
     write("data/hammer/meta.json", {"fetched": dt.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"), "last_load": last,
                                      "vendors": vendors, "items": len(series)})
     print(f"Hammer: {len(series)} items, vendors {vendors}, {len(shrink)} shrink events")

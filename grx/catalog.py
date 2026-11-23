@@ -16,12 +16,12 @@ _C = [
  # id, label, cat, unit, show, show_label, terms, inc, exc, shelf, use, statcan
  ("eggs-large", "Large eggs", "Dairy & eggs", "egg", 12, "per dozen", ["eggs"], r"\beggs?\b", r"medium|small|jumbo|extra large|\bxl\b|liquid|egg whites|whites\b|yolk|boiled|creation|salted|duck|quail|tart|pickl|just egg|substitut|puff|noodle|fried|salad|chocolate|nog|roll|bite|sandwich|2go|jumbo pack", 35, 7, "eggs 12"),
  ("milk-2", "2% milk", "Dairy & eggs", "L", 4, "per 4 L", ["2% milk", "milk"], r"\b2\s?%.*milk|milk.*\b2\s?%", r"chocolate|lactose|evaporated|condensed|powder|oat|almond|soy|goat|a2", 12, 5, "milk 2 litres"),
- ("butter", "Butter", "Dairy & eggs", "kg", .454, "per 454 g", ["butter"], r"\bbutter\b", r"peanut|almond|cashew|apple|nut|cookie|chicken|cup|tart|popcorn|garlic|spread|margarine|croissant|shea|cocoa|milk|bean|squash|sauce", 120, 21, "butter 454"),
- ("cheddar", "Cheddar block", "Dairy & eggs", "kg", .4, "per 400 g", ["cheddar"], r"cheddar", r"shred|slice|string|crack|popcorn|chip|sauce|dip|soup|bun|bagel|puff|kraft dinner|macaroni|biscuit|goldfish", 60, 14, "cheddar"),
+ ("butter", "Butter", "Dairy & eggs", "kg", .454, "per 454 g", ["butter"], r"\bbutter\b", r"peanut|almond|cashew|apple|nut|cookie|chicken|cup|tart|popcorn|garlic|spread|margarine|croissant|shea|cocoa|milk|bean|squash|sauce|pastry|puff|chickpea|entree|tasty bite|biscuit|cracker|toffee|scotch|lettuce|cream|tub|whipped|ghee|flavour|flavor|candle|lotion|soap|balm|brioche|bread|bun|roll", 120, 21, "butter 454"),
+ ("cheddar", "Cheddar block", "Dairy & eggs", "kg", .4, "per 400 g", ["cheddar"], r"cheddar", r"shred|slice|string|crack|popcorn|chip|sauce|dip|soup|bun|bagel|puff|kraft dinner|macaroni|biscuit|goldfish|pasta|mac\b|velveeta|cheetos|snack|flavou?r|ruffles|crunch|broccoli|bread|pretzel|jalape|nacho|bite|melt|powder|spread", 60, 14, "cheddar"),
  ("yogurt", "Plain yogurt (large tub)", "Dairy & eggs", "kg", .75, "per 750 g", ["yogurt"], r"yog(h)?urt", r"drink|tube|bar|cup|bite|raisin|frozen|pretzel|dog|cat|100\s?g\b|4\s?x|6\s?x|8\s?x|12\s?x", 21, 6, "yogurt"),
  ("cream-cheese", "Cream cheese", "Dairy & eggs", "kg", .25, "per 250 g", ["cream cheese"], r"cream cheese", r"bagel|cake|frosting|dip|wonton", 45, 14, None),
  ("oat-milk", "Oat milk", "Dairy & eggs", "L", 1.75, "per 1.75 L", ["oat milk", "oat beverage"], r"\boat\b.*(milk|beverage|drink)", r"cookie|bar|cereal|creamer", 30, 7, None),
- ("bananas", "Bananas", "Produce", "kg", 1, "per kg", ["bananas"], r"banana", r"chip|bread|muffin|loaf|pudding|split|baby|cake|dried|pepper|smoothie|frozen|plantain|oat", 6, 4, "bananas"),
+ ("bananas", "Bananas", "Produce", "kg", 1, "per kg", ["bananas"], r"banana", r"chip|bread|muffin|loaf|pudding|split|baby|cake|dried|pepper|smoothie|frozen|plantain|oat|lea(f|ves)|candy|brownie|cookie|peelz|jelly|chubby|go banana|bar\b|yogurt|milk|cereal|flavou?r|puree|pouch|snack|crisp|gummi|gummy|leather|nut|cream", 6, 4, "bananas"),
  ("apples", "Apples", "Produce", "kg", 1, "per kg", ["apples"], r"\bapples?\b", r"juice|sauce|cider|pie|chip|turnover|crisp|vinegar|strudel|fritter|dried|pear|sauce|bar", 30, 7, "apples"),
  ("avocados", "Avocados", "Produce", "each", 1, "each", ["avocado"], r"avocado", r"oil|dip|guac|toast|bar|mayo|sauce", 6, 2, None),
  ("potatoes", "Potatoes", "Produce", "kg", 1, "per kg", ["potatoes"], r"potato", r"chip|sweet|fries|salad|mash|wedge|hash|tot|skin|pierog|starch|bread|bun|perogie|soup|seasoning", 45, 7, "potatoes"),
@@ -31,14 +31,14 @@ _C = [
  ("broccoli", "Broccoli", "Produce", "each", 1, "each", ["broccoli"], r"broccoli", r"frozen|slaw|salad|soup|rice|cheese|floret|tot|mix", 7, 5, None),
  ("cucumber", "English cucumber", "Produce", "each", 1, "each", ["cucumber"], r"cucumber", r"pickle|mini|lotion|mask|water|sauce|salad|tzatziki|dill", 7, 4, "cucumber"),
  ("lettuce", "Romaine lettuce", "Produce", "each", 1, "each", ["romaine"], r"romaine", r"salad kit|caesar|dressing|heart.*3|kit|mix", 7, 5, "romaine"),
- ("strawberries", "Strawberries", "Produce", "kg", 1, "per kg", ["strawberries"], r"strawberr", r"jam|yogurt|frozen|cereal|syrup|milk|cake|juice|dried|smoothie|candy|pie|spread|sauce|drink", 4, 4, None),
- ("chicken-breast", "Chicken breast (boneless)", "Meat & seafood", "kg", 1, "per kg", ["chicken breast"], r"chicken breast", r"nugget|strip|burger|sandwich|soup|sausage|deli|sliced|breaded|frozen|cutlet|wing|thigh|drumstick|cooked|roast(ed)?|wrap|salad|pie|bite|ready|meal|kiev|cordon|tender|butter chicken|bacon wrap", 3, 4, "chicken breast"),
+ ("strawberries", "Strawberries", "Produce", "kg", 1, "per kg", ["strawberries"], r"strawberr", r"jam|yogurt|frozen|cereal|syrup|milk|cake|juice|dried|smoothie|candy|pie|spread|sauce|drink|gel\b|crunch|blend|peach|banana|toast|bar\b|gummi|gummy|cookie|wafer|flavou?r|jelly|freeze.?dried", 4, 4, None),
+ ("chicken-breast", "Chicken breast (boneless)", "Meat & seafood", "kg", 1, "per kg", ["chicken breast"], r"chicken breast", r"nugget|strip|burger|sandwich|soup|sausage|deli|sliced|breaded|frozen|cutlet|wing|thigh|drumstick|cooked|roast(ed)?|wrap|salad|pie|bite|ready|meal|kiev|cordon|tender|butter chicken|bacon wrap|schnitzel|stuffed|marinated|souvlaki|skewer|kebab|parmesan|panko|seasoned", 3, 4, "chicken breast"),
  ("chicken-thigh", "Chicken thighs", "Meat & seafood", "kg", 1, "per kg", ["chicken thighs"], r"chicken thigh", r"cooked|bbq|frozen|wrap|meal|sandwich|soup|bite|nugget", 3, 4, "chicken thigh"),
  ("ground-beef", "Lean ground beef", "Meat & seafood", "kg", 1, "per kg", ["ground beef"], r"ground beef|lean ground", r"pork|chicken|turkey|burger|patty|patties|lasagna|sauce|chili|frozen meal|taco kit|meatball|pie|veal", 3, 5, "ground beef"),
  ("pork-chops", "Pork chops", "Meat & seafood", "kg", 1, "per kg", ["pork chops"], r"pork (loin )?chop", r"bbq sauce|cooked|frozen meal|seasoning|shake", 3, 5, "pork loin"),
  ("bacon", "Bacon", "Meat & seafood", "kg", .375, "per 375 g", ["bacon"], r"\bbacon\b", r"bits|chip|flavour|flavor|burger|wrap|sandwich|dog|treat|turkey|ranch|dip|jam|cheese|salad|potato|bagel|egg|seasoning|bacon wrapped|bacon bites", 21, 10, "bacon"),
  ("salmon", "Salmon fillets", "Meat & seafood", "kg", 1, "per kg", ["salmon"], r"salmon", r"canned|smoked|sushi|cat|dog|burger|cake|sandwich|oil|treat|roe|wrap|jerky|flavour", 2, 7, "salmon"),
- ("shrimp", "Shrimp", "Meat & seafood", "kg", 1, "per kg", ["shrimp"], r"shrimp", r"ring|chip|cracker|noodle|dumpling|wonton|cocktail sauce|paste|flavour|sauce|ramen|roll|sushi|tempura", 90, 14, None),
+ ("shrimp", "Shrimp", "Meat & seafood", "kg", 1, "per kg", ["shrimp"], r"shrimp", r"ring|chip|cracker|noodle|dumpling|wonton|cocktail sauce|paste|flavour|sauce|ramen|roll|sushi|tempura|fried rice|\brice\b|breaded|battered|meal|bowl|dinner", 90, 14, None),
  ("tofu", "Firm tofu", "Meat & seafood", "kg", .45, "per 454 g", ["tofu"], r"\btofu\b", r"dessert|pudding|puff|skin|fried|marinated|smoked|jerky", 21, 7, "tofu"),
  ("bread", "Sliced bread", "Bakery", "kg", .675, "per 675 g loaf", ["bread"], r"\bbread\b", r"crumb|stick|naan|pita|garlic|banana|corn|french|pudding|maker|knife|flour|mix|dough|fruit|raisin|cheese|frozen|stuffing|crouton|machine|bag|loaf pan|zucchini|monkey|flat|bun", 7, 6, "white bread"),
  ("bagels", "Bagels", "Bakery", "each", 1, "per pack", ["bagels"], r"bagel", r"chip|bite|cream cheese|seasoning|dog|toaster|pizza|sandwich|egg", 6, 2, None),
@@ -48,19 +48,19 @@ _C = [
  ("olive-oil", "Olive oil", "Pantry", "L", 1, "per L", ["olive oil"], r"olive oil", r"spray|tuna|sardine|chip|cracker|mayo|soap|hair|pomace|dressing|vinaigrette|marinated|in olive oil|with olive oil|cooking spray|bread", 540, 45, "olive oil"),
  ("canola-oil", "Canola oil", "Pantry", "L", 3, "per 3 L", ["canola oil", "vegetable oil"], r"canola|vegetable oil", r"spray|mayo|margarine|chip|tuna|in canola|cooking spray", 365, 60, "canola"),
  ("peanut-butter", "Peanut butter", "Pantry", "kg", 1, "per kg", ["peanut butter"], r"peanut butter", r"cup|cookie|bar|cereal|chocolate|pretzel|treat|dog|cracker|ice cream|filled|sandwich|bite|powder|protein|spread with", 180, 21, "peanut butter"),
- ("flour", "All-purpose flour", "Pantry", "kg", 2.5, "per 2.5 kg", ["flour"], r"\bflour\b", r"tortilla|mix|corn|almond|rice|coconut|cassava|tapioca|chickpea|oat|gluten|cake|pancake|pizza|bread|potato|self", 365, 45, "flour"),
+ ("flour", "All-purpose flour", "Pantry", "kg", 2.5, "per 2.5 kg", ["flour"], r"\bflour\b", r"tortilla|mix|corn|almond|rice|coconut|cassava|tapioca|chickpea|oat|gluten|cake|pancake|pizza|bread|potato|self|durum|atta|desi|whole wheat|chapati|besan|gram|semolina|maida|cookie|cracker", 365, 45, "flour"),
  ("sugar", "White sugar", "Pantry", "kg", 2, "per 2 kg", ["sugar"], r"\bsugar\b", r"brown|icing|free|cookie|candy|cane|snap|cereal|syrup|substitute|coconut|less|reduced|no sugar|zero|sweetener|cube|maple|donut|scrub|pea|crisp|wafer", 720, 45, "sugar"),
- ("canned-tomatoes", "Canned tomatoes", "Pantry", "kg", .796, "per 796 ml can", ["canned tomatoes", "diced tomatoes"], r"(diced|crushed|whole|stewed|plum).*tomato|tomato.*(diced|crushed|whole|plum)", r"sauce|paste|soup|ketchup|salsa|juice|sun.?dried|chip|basil pasta", 720, 7, "canned tomatoes"),
+ ("canned-tomatoes", "Canned tomatoes", "Pantry", "L", .796, "per 796 ml can", ["canned tomatoes", "diced tomatoes"], r"(diced|crushed|whole|stewed|plum).*tomato|tomato.*(diced|crushed|whole|plum)", r"sauce|paste|soup|ketchup|salsa|juice|sun.?dried|chip|basil pasta", 720, 7, "canned tomatoes"),
  ("cereal", "Breakfast cereal", "Pantry", "kg", .5, "per 500 g", ["cereal"], r"cereal|cheerios|corn flakes|bran flakes|shreddies|special k|honey nut|mini.?wheats", r"bar|bowl|milk|snack|baby|infant|cookie|treat", 180, 10, "cereal"),
  ("oats", "Rolled oats", "Pantry", "kg", 1, "per kg", ["oats", "oatmeal"], r"\boats?\b|oatmeal", r"cookie|bar|milk|beverage|drink|cereal|granola|bread|cup|instant packet|packet|bite|cheerios|square|crisp", 365, 21, "oats"),
  ("coffee", "Ground coffee", "Pantry", "kg", .9, "per 900 g", ["coffee"], r"coffee", r"pod|k-cup|kcup|capsule|cup|creamer|mate|cake|ice cream|maker|machine|filter|mug|liqueur|cold brew|latte|frapp|instant|drink|bean.*whole|beverage|syrup|candy|flavour|sauce|table|chocolate|bar|cookie", 120, 30, "coffee"),
- ("tea", "Black tea bags", "Pantry", "each", 1, "per box", ["tea bags", "tea"], r"\btea\b", r"iced|ice|kettle|cup|latte|kombucha|green tea mint|bubble|boba|drink|beverage|towel|tree|biscuit|cake|light|candle|chai latte|pot|infuser|lemon iced", 540, 30, "tea"),
+ ("tea", "Black tea bags", "Pantry", "each", 1, "per box", ["tea bags", "tea"], r"\btea\b", r"iced|ice|kettle|cup|latte|kombucha|green tea mint|bubble|boba|drink|beverage|towel|tree|biscuit|cake|light|candle|chai latte|pot|infuser|lemon iced|peace tea|cracker|\d\s?l\b|bottle|can\b|tea tree|teapot|sweet tea|arizona|nestea|snapple|lipton ice", 540, 30, "tea"),
  ("orange-juice", "Orange juice", "Beverages", "L", 2.63, "per 2.63 L", ["orange juice"], r"orange juice", r"frozen concentrate|cocktail|punch|drink|soda|pop|vodka|smoothie|lemonade|blend|sparkling", 14, 7, "orange juice"),
  ("cola", "Cola (cans)", "Beverages", "L", 4.26, "per 12 x 355 ml", ["coca-cola", "pepsi", "cola"], r"coca.?cola|\bcoke\b|pepsi|\bcola\b", r"zero|diet|mini|cherry|vanilla|rum|whisky|chicken|bottle 2\s?l|2\s?l\b|syrup|glass|candy|gummy", 270, 14, None),
  ("sparkling-water", "Sparkling water", "Beverages", "L", 4.26, "per 12 x 355 ml", ["sparkling water"], r"sparkling water|soda water|bubly|perrier|san pellegrino", r"juice|wine|maker|machine|cartridge|syrup|lemonade", 270, 10, None),
  ("chips", "Potato chips", "Snacks", "kg", .235, "per 235 g bag", ["chips"], r"\bchips\b", r"chocolate|cookie|tortilla|pita|bagel|banana|apple|kale|veggie|corn|wood|fish|computer|poker|chip clip|dip|salsa|ahoy|bit|baking|pretzel|plantain|seaweed|rice", 90, 7, None),
  ("chocolate", "Chocolate bars", "Snacks", "kg", .1, "per 100 g", ["chocolate bar"], r"chocolate bar|kitkat|kit kat|aero|coffee crisp|mars bar|snickers|lindt|toblerone|cadbury", r"cereal|ice cream|cookie|milk drink|cake|frozen|protein|syrup|chips|granola|spread|mini.*bag", 270, 7, None),
- ("frozen-pizza", "Frozen pizza", "Frozen", "each", 1, "each", ["frozen pizza", "pizza"], r"pizza", r"pocket|sauce|dough|crust|cheese pull|pizza mozzarella|pepperoni slices|pan|stone|cutter|oven|bites|rolls|snack|kit|seasoning|bagel|delivery|fresh", 180, 7, None),
+ ("frozen-pizza", "Frozen pizza", "Frozen", "each", 1, "each", ["frozen pizza", "pizza"], r"pizza", r"pocket|sauce|dough|crust|cheese pull|pizza mozzarella|pepperoni slices|pan|stone|cutter|oven|bites|rolls|snack|kit|seasoning|bagel|delivery|fresh|pops?\b|pizzaiolo|flatbread|mini|shells?|sub\b|toaster|french bread", 180, 7, None),
  ("frozen-veg", "Frozen vegetables", "Frozen", "kg", .75, "per 750 g", ["frozen vegetables", "frozen peas"], r"frozen.*(veg|peas|corn|broccoli|mixed|beans)|(peas|corn|mixed vegetables).*frozen|green giant", r"meal|pizza|pie|dinner|rice bowl|soup|stir.?fry kit|ice cream|fries|potato", 270, 10, None),
  ("ice-cream", "Ice cream (tub)", "Frozen", "L", 1.5, "per 1.5 L", ["ice cream"], r"ice cream", r"cone|sandwich|bar|maker|scoop|cake|topping|sauce|bowl|cereal|cookie|frozen yogurt pop|popsicle|mochi|stick|bites", 120, 10, "ice cream"),
  ("toilet-paper", "Toilet paper", "Household", "roll", 24, "per 24 rolls", ["toilet paper", "bathroom tissue"], r"toilet paper|bathroom tissue|bath tissue|charmin|cottonelle|royale|cashmere|purex", r"wipe|flushable|holder|plunger|cleaner|paper towel|facial", 3650, 30, None),
@@ -83,12 +83,37 @@ for row in _C:
                   "shelf": shelf, "use": use, "statcan": sc, "default": DEFAULT_SIZE.get(i)})
 BY_ID = {it["id"]: it for it in ITEMS}
 
+# Typical Ontario price per display unit (late 2026, rounded). Only used as a sanity
+# fence: a listing whose unit price lands outside 0.3x-3.5x of this is a parsing or
+# matching error (wrong pack size, a garnish, a sauce), so it is dropped.
+REF = {"eggs-large": 4.5, "milk-2": 6.5, "butter": 6.5, "cheddar": 6.5, "yogurt": 5, "cream-cheese": 4, "oat-milk": 4.5,
+       "bananas": 1.8, "apples": 5, "avocados": 1.5, "potatoes": 2.5, "onions": 3, "carrots": 2.5, "tomatoes": 6,
+       "broccoli": 3, "cucumber": 1.5, "lettuce": 3, "strawberries": 9, "chicken-breast": 17, "chicken-thigh": 12,
+       "ground-beef": 12, "pork-chops": 11, "bacon": 7, "salmon": 25, "shrimp": 22, "tofu": 3.5, "bread": 3.5,
+       "bagels": 4.5, "tortillas": 4.5, "rice": 20, "pasta": 2.5, "olive-oil": 14, "canola-oil": 9, "peanut-butter": 7,
+       "flour": 7, "sugar": 4.5, "canned-tomatoes": 2.5, "cereal": 5, "oats": 5, "coffee": 16, "tea": 5,
+       "orange-juice": 5, "cola": 8, "sparkling-water": 6, "chips": 4.5, "chocolate": 3, "frozen-pizza": 7,
+       "frozen-veg": 4, "ice-cream": 6, "toilet-paper": 14, "paper-towels": 12, "detergent": 15, "dish-soap": 4,
+       "dog-food": 45, "cat-litter": 15}
+for _it in ITEMS:
+    _it["ref"] = REF[_it["id"]] / _it["show"]
+
+# Pet food, baby food and similar never count for people groceries.
+NOT_HUMAN = re.compile(r"\b(dog|dogs|cat|cats|puppy|kitten|pet|purina|pedigree|whiskas|friskies|fancy feast|baby food|infant|toddler)\b", re.I)
+
+
+def plausible(item, unit_price):
+    return unit_price is not None and 0.3 * item["ref"] <= unit_price <= 3.5 * item["ref"]
+
+
 # Private labels: price-match policies generally exclude competitors' house brands.
 PRIVATE_LABELS = re.compile(r"\b(no name|president'?s choice|\bpc\b|pc®|great value|equate|compliments|selection|irresistibles|life smart|our finest|longo'?s|farm boy|kirkland|sensations|western family|our compliments|smartly|t&t|foodland|freshco|giant tiger|rooster)\b", re.I)
 
 
 def match(name, item):
     n = (name or "").lower()
+    if item["cat"] != "Pets" and NOT_HUMAN.search(n):
+        return False
     if not item["inc"].search(n):
         return False
     if item["exc"] and item["exc"].search(n):

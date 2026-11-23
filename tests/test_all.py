@@ -20,6 +20,13 @@ def test_units():
     assert abs(units.unit_price(5.49, "kg", "Butter 454 g") - 5.49 / .454) < 1e-9
     assert units.unit_price(12.99, "roll", "Royale toilet paper 24 double rolls") == 12.99 / 24
     assert units.effective_price(5, "2/") == 2.5
+    assert abs(units.unit_price(5.99, "kg", "chicken breast", "", "lb 13.21kg") - 5.99 / 0.45359237) < 1e-6
+    assert abs(units.unit_price(6.99, "kg", "chicken breast", "", "/lb 15.41/kg!") - 6.99 / 0.45359237) < 1e-6
+    assert units.unit_price(13.21, "kg", "x", "", "/kg") == 13.21
+    from grx.catalog import BY_ID as _B
+    seg = units.segment("DANONE ACTIVIA YOGURT TUB (650g) or NO NAME CREAM CHEESE (227g - 250g)", _B["cream-cheese"]["inc"])
+    assert "650" not in seg and abs(units.unit_price(4.19, "kg", seg) - 4.19 / .227) < 1e-6
+    assert units.unit_price(1.48, "each", "CROWN BROCCOLI", "", "/lb") is None
     assert units.money("$1.10/100g") == 1.10 and units.money("2/$5") is None and units.money(None) is None
 
 
@@ -31,6 +38,11 @@ def test_catalog_matching():
     assert classify("Neilson 2% Milk 4 L")[0]["id"] == "milk-2"
     assert not any(i["id"] == "butter" for i in classify("Kraft Peanut Butter 1 kg"))
     assert classify("Kraft Peanut Butter 1 kg")[0]["id"] == "peanut-butter"
+    for bad in ["Great Value Butter Puff Pastry, 450 G", "Tasty Bite Butter Chickpea All Natural Indian Entree, 285g"]:
+        assert not classify(bad), bad
+    assert not classify("Purina One True Instinct Classic Ground Beef & Wild-Caught Salmon, Wet Dog Food")
+    assert not classify("Buenas Banana Leaves 454g") and not classify("Chubby Go Banana 250g")
+    assert not any(i["id"] == "chicken-breast" for i in classify("Farm Boy Chicken Breast Schnitzel"))
 
 
 def test_flipp_rows_real_sample():
@@ -109,7 +121,7 @@ def test_hammer_and_build_end_to_end():
         with zipfile.ZipFile(zp, "w") as z:
             z.writestr("hammer-5-product.csv", "﻿" + prod.getvalue())
             z.writestr("hammer-5-raw.csv", "﻿" + raw.getvalue())
-        series, shrink = hammer.parse(zp, log=lambda *a: None)
+        series, shrink, audit = hammer.parse(zp, log=lambda *a: None)
         assert set(series["eggs-large"]) == {"Metro", "NoFrills"}
         assert any(s["item"] == "coffee" and s["size_after"] < s["size_before"] for s in shrink)
         os.makedirs(os.path.join(root, "data/hammer")); os.makedirs(os.path.join(root, "data/flipp"))

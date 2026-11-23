@@ -14,7 +14,7 @@ import urllib.request
 import zipfile
 
 from .. import units
-from ..catalog import ITEMS, match
+from ..catalog import ITEMS, match, plausible
 
 URLS = ["https://jacobfilipp.com/hammerdata/hammer-5-csv.zip"]
 LASTUPDATED = "https://jacobfilipp.com/hammerdata/hammer-lastupdated.txt"
@@ -84,7 +84,8 @@ def parse(zip_path, since_days=None, log=print):
     cutoff = (dt.date.today() - dt.timedelta(days=since_days)).isoformat() if since_days else ""
     agg = {}      # (item, vendor, date) -> [unit price, was unit price]
     sizes = {}    # product_id -> [(date, size)]
-    n = 0
+    n = dropped = 0
+    latest = {}   # (item, vendor) -> {product name: (date, unit price, price, units)} for the audit log
     for r in _reader(z, _member(z, "raw")):
         pid = r.get("product_id")
         p = prods.get(pid)
@@ -96,11 +97,15 @@ def parse(zip_path, since_days=None, log=print):
         item, vendor, name, size_text, brand = p
         price = units.money(r.get("current_price"))
         up = _unit_price(price, item, name, size_text)
-        if up is None:
+        if not plausible(item, up):
+            dropped += 1
             continue
         was = units.money(r.get("old_price"))
         wup = _unit_price(was, item, name, size_text) if was and price and was > price else None
+        if wup and not plausible(item, wup):
+            wup = None
         k = (item["id"], vendor, d)
+        latest.setdefault((item["id"], vendor), {})[name] = (d, up, price, size_text)
         cur = agg.get(k)
         if cur is None or up < cur[0]:
             agg[k] = [up, wup]
@@ -110,8 +115,13 @@ def parse(zip_path, since_days=None, log=print):
             if not h or abs(h[-1][1] - s) / max(h[-1][1], 1e-9) > 0.02:
                 h.append((d, s, price))
         n += 1
-    log(f"  {n} matched daily price rows")
-    return _series(agg), _shrink(sizes, prods)
+    log(f"  {n} matched daily price rows, {dropped} dropped as implausible unit prices")
+    audit = {}
+    for (iid, v), names in latest.items():
+        last_day = max(x[0] for x in names.values())
+        cur = sorted((x[1], nm, x[2], x[3]) for nm, x in names.items() if x[0] == last_day)
+        audit.setdefault(iid, {})[v] = [{"unit_price": round(u, 4), "name": nm, "price": p, "units": un} for u, nm, p, un in cur[:3]]
+    return _series(agg), _shrink(sizes, prods), audit
 
 
 def _series(agg):

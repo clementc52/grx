@@ -10,6 +10,8 @@ import json
 import urllib.request
 import zipfile
 
+UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36 GRX-grocery-research"}
+
 from .. import units
 from ..catalog import ITEMS
 
@@ -20,13 +22,13 @@ FALLBACK = "https://www150.statcan.gc.ca/n1/tbl/csv/18100245-eng.zip"
 def download(path, log=print):
     url = FALLBACK
     try:
-        with urllib.request.urlopen(WDS, timeout=60) as r:
+        with urllib.request.urlopen(urllib.request.Request(WDS, headers=UA), timeout=60) as r:
             j = json.loads(r.read())
             url = j.get("object") or FALLBACK
     except Exception as e:
         log(f"  ! WDS lookup failed ({e}); using fallback URL")
     log(f"  downloading {url}")
-    with urllib.request.urlopen(url, timeout=300) as r, open(path, "wb") as f:
+    with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=300) as r, open(path, "wb") as f:
         f.write(r.read())
     return path
 

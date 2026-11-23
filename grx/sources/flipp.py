@@ -10,7 +10,7 @@ import urllib.parse
 import urllib.request
 
 from .. import units
-from ..catalog import ITEMS, match
+from ..catalog import ITEMS, match, plausible
 
 URL = "https://backflipp.wishabi.com/flipp/items/search"
 UA = "Mozilla/5.0 (GRX grocery price research; +https://github.com/)"
@@ -31,11 +31,14 @@ def rows_from(payload, item, fsa, dist_km, seen_at):
         if not name or not match(name, item):
             continue
         price = units.effective_price(it.get("current_price"), it.get("pre_price_text"))
-        up = units.unit_price(price, item["unit"], name, "", it.get("post_price_text") or "")
+        seg = units.segment(name, item["inc"])
+        if item["exc"] and item["exc"].search(seg.lower()):
+            continue
+        up = units.unit_price(price, item["unit"], seg, "", it.get("post_price_text") or "")
         assumed = False
-        if up is None and item.get("default") and price:
+        if up is None and item.get("default") and price and not units.mass_or_volume(seg):
             up, assumed = price / item["default"], True
-        if up is None:
+        if not plausible(item, up):
             continue
         out.append({
             "item": item["id"], "kind": "flyer", "merchant": (it.get("merchant_name") or "").strip(),
@@ -51,8 +54,8 @@ def rows_from(payload, item, fsa, dist_km, seen_at):
         if not name or not match(name, item):
             continue
         price = units.money(it.get("current_price"))
-        up = units.unit_price(price, item["unit"], name)
-        if up is None:
+        up = units.unit_price(price, item["unit"], units.segment(name, item["inc"]))
+        if not plausible(item, up):
             continue
         orig = units.money(it.get("original_price"))
         out.append({
