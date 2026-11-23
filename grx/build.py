@@ -6,7 +6,7 @@ import os
 import re
 
 from . import analytics as A
-from .catalog import ITEMS, PRIVATE_LABELS
+from .catalog import BY_ID, ITEMS, PRIVATE_LABELS, match, plausible
 
 ALIAS = {"ttsupermarket": "tandt", "tt": "tandt", "tandtsupermarket": "tandt", "galleriasupermarket": "galleria",
          "saveonfoods": "saveonfoods", "sobeys": "voila", "voilabysobeys": "voila", "realcanadiansuperstore": "superstore",
@@ -27,12 +27,18 @@ def load(path, default):
         return default
 
 
+def valid(r):
+    """Re-check stored rows against the current matching rules, so rule fixes apply retroactively."""
+    it = BY_ID.get(r.get("item"))
+    return bool(it) and match(r.get("name", ""), it) and plausible(it, r.get("unit_price"))
+
+
 def flipp_history(root):
     rows = []
     for fn in sorted(glob.glob(os.path.join(root, "data/flipp/*.jsonl")))[-6:]:
         with open(fn) as f:
             rows += [json.loads(l) for l in f if l.strip()]
-    return rows
+    return [r for r in rows if valid(r)]
 
 
 def flyer_cycles(rows, today):
@@ -85,7 +91,7 @@ def build(root=".", today=None, cfg=None):
         pooled.setdefault(cat, []).extend(fc["gaps"])
     curves = {c: A.km_curve(g, []) if g else None for c, g in pooled.items()}
 
-    live = [r for r in latest.get("rows", []) if r.get("km", 0) <= radius and
+    live = [r for r in latest.get("rows", []) if valid(r) and r.get("km", 0) <= radius and
             ((r["kind"] == "flyer" and r.get("valid_to", "") >= tday and r.get("valid_from", "") <= tday) or r["kind"] == "online")]
     items_out, hist_out, match_plan = [], {}, []
     matchers = cfg.get("price_match_at", ["No Frills"])
