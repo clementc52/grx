@@ -147,7 +147,7 @@ def gh(method, path, body=None):
     tok, repo = os.environ.get("GITHUB_TOKEN"), os.environ.get("GITHUB_REPOSITORY")
     req = urllib.request.Request(f"https://api.github.com/repos/{repo}{path}", method=method,
                                  data=json.dumps(body).encode() if body else None,
-                                 headers={"Authorization": f"Bearer {tok}", "Accept": "application/vnd.github+json"})
+                                 headers={"Authorization": f"Bearer {tok}", "Accept": "application/vnd.github+json", "Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=30) as r:
         return json.loads(r.read() or b"null")
 
@@ -189,6 +189,13 @@ def cmd_alerts():
     write("data/alerts_state.json", {k: v for k, v in state.items() if v >= cutoff})
 
 
+def summary(b):
+    h = b["health"]
+    n = sum(len(i["offers"]) for i in b["items"])
+    return (f"board: {len(b['items'])} staples, {n} prices from {len(b['chains'])} stores; flyers {h['flyers']['age_h']} h old, "
+            f"shelf load {h['shelf']['last_load']}, {h['in_store']['rows']} in-store, {h['outliers_dropped']} outliers hidden")
+
+
 def main(argv):
     if not argv:
         print(__doc__)
@@ -204,7 +211,7 @@ def main(argv):
         return cmd_openprices()
     if c == "build":
         b = B.build(ROOT)
-        print(f"board: {len(b['items'])} items, {b['sources']['flipp']['rows']} live offers from {b['sources']['flipp']['merchants']} merchants")
+        print(summary(b))
         return 0
     if c == "alerts":
         return cmd_alerts()

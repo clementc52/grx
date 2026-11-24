@@ -131,6 +131,7 @@ def test_build_end_to_end():
         assert ups == sorted(ups) and eggs["offers"]
         assert {o["kind"] for o in eggs["offers"]} >= {"flyer", "shelf"}
         assert eggs["shelf"] and eggs["shelf"][0]["low"] <= eggs["shelf"][0]["high"]
+        assert R.summary(b).startswith("board: 19 staples")
         # price alert respects chosen stores
         hits = R.check_rules(b, [{"item": "eggs-large", "below": 99}], ["Metro"])
         assert hits and "Metro" in hits[0]["body"]
