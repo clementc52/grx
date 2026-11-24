@@ -65,6 +65,13 @@ MAX_PACK = {"eggs-large": 30, "milk-2": 4.01, "butter": 1.0, "cheddar": 1.4, "ap
 for _it in ITEMS:
     _it["max_pack"] = MAX_PACK[_it["id"]]
 
+# Fresh chicken is sold by weight. The shelf-history source can't tell "$7.99 per lb" from
+# "$7.99 for the 2.2 lb pack" (checked against T&T's site), so chicken comes from flyers only,
+# which print "/lb" explicitly.
+NO_SHELF = {"chicken-breast", "chicken-thigh"}
+for _it in ITEMS:
+    _it["shelf_ok"] = _it["id"] not in NO_SHELF
+
 
 def household(item, pack):
     return pack is None or pack <= item["max_pack"] * 1.02

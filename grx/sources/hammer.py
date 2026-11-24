@@ -75,7 +75,7 @@ def parse(zip_path, since_days=None, log=print, basket=6, recent_days=120):
         if units.ambiguous(name) or units.ambiguous(r.get("units") or ""):
             continue
         for item in ITEMS:
-            if match(name, item):
+            if item["shelf_ok"] and match(name, item):
                 prods[r.get("id")] = (item, (r.get("vendor") or "").strip(), name, r.get("units") or "", r.get("brand") or "")
                 break
     log(f"  {len(prods)} Hammer products match the catalog")

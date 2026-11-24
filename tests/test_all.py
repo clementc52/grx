@@ -71,6 +71,10 @@ def test_outlier_crosscheck():
     assert A.drop_outliers(ps[:3])[1] == []                    # too few prices to judge: keep all
 
 
+def test_chicken_not_taken_from_shelf_history():
+    assert not BY_ID["chicken-breast"]["shelf_ok"] and not BY_ID["chicken-thigh"]["shelf_ok"] and BY_ID["eggs-large"]["shelf_ok"]
+
+
 def test_wholesale_packs_excluded():
     from grx.catalog import household
     assert not household(BY_ID["onions"], 22.7)      # 50 lb bag
