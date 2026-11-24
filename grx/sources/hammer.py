@@ -72,7 +72,7 @@ def parse(zip_path, since_days=None, log=print, basket=6, recent_days=120):
     prods = {}
     for r in _reader(z, _member(z, "product")):
         name = r.get("product_name") or ""
-        if units.ambiguous(name):
+        if units.ambiguous(name) or units.ambiguous(r.get("units") or ""):
             continue
         for item in ITEMS:
             if match(name, item):

@@ -114,11 +114,17 @@ _SIZE_TOKEN = re.compile(r"\d+(?:\.\d+)?\s*(?:kg|g|ml|l|lb|lbs|oz|'s|pcs?|pack|p
 _ORWORD = re.compile(r"\s(?:or|ou)\s", re.I)
 
 
+_APPROX = re.compile(r"~|\bapprox|\bavg\b|\baverage\b|\bvalue pack \(|\bvariable weight", re.I)
+
+
 def ambiguous(name):
     """True when a listing can't be priced per unit with certainty:
-    a size range ("227/250 G", "800-930 g") or an "X or Y" ad that prints
-    more than one size ("YOGURT 650 g or CREAM CHEESE 227 g")."""
+    a size range ("227/250 G", "800-930 g"), an "X or Y" ad that prints
+    more than one size ("YOGURT 650 g or CREAM CHEESE 227 g"), or a
+    variable-weight pack ("Value Pack (~3lb)") whose price may be per lb."""
     n = name or ""
+    if _APPROX.search(n):
+        return True
     if _RANGE.search(n):
         return True
     if _ORWORD.search(n) and len(_SIZE_TOKEN.findall(n)) > 1:

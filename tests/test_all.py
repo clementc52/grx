@@ -26,7 +26,8 @@ def test_units():
 
 def test_ambiguous_listings_are_skipped():
     for n in ["NO NAME® CREAM CHEESE, 227/250 G", "PC® ROAST AND GROUND COFFEE, 800-930 G",
-              "DANONE ACTIVIA YOGURT TUB (650g) or NO NAME CREAM CHEESE (227g - 250g)"]:
+              "DANONE ACTIVIA YOGURT TUB (650g) or NO NAME CREAM CHEESE (227g - 250g)",
+              "Chicken Breast Boneless & Skinless Value Pack (~3lb)", "~3lb"]:
         assert units.ambiguous(n), n
     for n in ["FARMER'S MARKET™ CARROTS OR YELLOW ONIONS, 3 LB BAG", "NEILSON TRUTASTE 1%, 2% OR SKIM MILK, 4 L", "Gay Lea Salted Butter 454 G"]:
         assert not units.ambiguous(n), n
