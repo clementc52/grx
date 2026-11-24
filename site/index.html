@@ -8,13 +8,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
-/* VOICE work tool with a flyer's swagger: real prices, plain calls
-   IDEA the weekly flyer turned into a trading desk: every grocery gets a Buy / Wait / Stock up call
-   PICTURE the signal board (calls, odds bars, 90-day range) with a per-item price-history chart beside it
-   COLOUR white ground, flyer yellow #ffd31a header, ink, green = buy, amber-free: wait in blue #1f5fbf, red = overpriced
-   TYPE Anton for calls and prices + Archivo for text
-   LAYOUT header band, board left + sticky detail right over 1100px; stacked on phone */
-:root{color-scheme:light dark;--bg:light-dark(#fff,#121310);--panel:light-dark(#f7f6f0,#1b1d18);--ink:light-dark(#141414,#f2f0e6);--mute:light-dark(#5e5c53,#a9a697);--line:light-dark(#e3e1d7,#30322b);--y:#ffd31a;--yk:#141414;--buy:light-dark(#0b7a3b,#4cc46e);--wait:light-dark(#1f5fbf,#7aa7ff);--stock:light-dark(#0b7a3b,#4cc46e);--dn:light-dark(#d7141a,#ff6b6b)}
+/* VOICE plain and trustworthy: observed prices only, every number traceable to its source
+   IDEA the weekly flyer as a price board: the cheapest real listing for each staple, with its receipt-like source line
+   PICTURE the price board (cheapest now, runners-up, 90-day range) with a per-item history chart beside it
+   COLOUR white ground, flyer yellow header, ink, one green for "lowest in 90 days", red only for warnings
+   TYPE Anton for prices and titles + Archivo for text
+   LAYOUT header band with data health, store picker, board left + sticky detail right over 1100px; stacked on phone */
+:root{color-scheme:light dark;--bg:light-dark(#fff,#121310);--panel:light-dark(#f7f6f0,#1b1d18);--ink:light-dark(#141414,#f2f0e6);--mute:light-dark(#5e5c53,#a9a697);--line:light-dark(#e3e1d7,#30322b);--y:#ffd31a;--yk:#141414;--good:light-dark(#0b7a3b,#4cc46e);--warn:light-dark(#b3261e,#ff8a80)}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
 [hidden]{display:none!important}
@@ -24,7 +24,7 @@ body{background:var(--bg);color:var(--ink);font:16px/1.5 Archivo,system-ui,sans-
 button,select,input{font:inherit}
 button{font-weight:700;font-size:14px;min-height:40px;padding:0 14px;border:2px solid currentColor;background:transparent;color:inherit;border-radius:6px;cursor:pointer}
 select,input{font-size:16px;min-height:44px;padding:0 10px;border:2px solid var(--ink);border-radius:6px;background:var(--bg);color:var(--ink)}
-:focus-visible{outline:3px solid var(--dn);outline-offset:2px}
+:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
 label{font-size:14px;font-weight:600;display:flex;flex-direction:column;gap:4px}
 h1{font:clamp(30px,4vw,48px)/1.05 Anton,Impact,sans-serif;font-weight:400;margin:0;text-wrap:balance}
 h2{font:24px/1.1 Anton,Impact,sans-serif;font-weight:400;margin:0 0 10px}
@@ -35,34 +35,39 @@ h3{font-size:15px;margin:16px 0 6px}
 .logo{font:26px/1 Anton,Impact,sans-serif;background:#d7141a;color:#fff;padding:6px 10px 8px;transform:rotate(-4deg);border-radius:3px}
 .brand{display:flex;gap:12px;align-items:center;margin-right:auto}
 .brand b{font:24px/1 Anton,Impact,sans-serif;display:block}
-.fresh{font-size:13px;font-weight:600}
-.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px 32px;align-items:end;border-bottom:1px solid var(--line)}
-.tally{display:flex;gap:22px;flex-wrap:wrap}
-.tally div{display:flex;flex-direction:column}
-.tally b{font:38px/1 Anton,Impact,sans-serif;font-weight:400}
-.tally span{font-size:13px;color:var(--mute)}
-.ctl{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin:16px 0 4px}
-.desk{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:24px;align-items:start}
+.where{font-size:13px;font-weight:600}
+.health{display:flex;flex-wrap:wrap;gap:6px}
+.hc{font-size:13px;font-weight:700;padding:4px 9px;border-radius:12px;background:rgba(0,0,0,.08);white-space:nowrap}
+.hc.bad{background:#b3261e;color:#fff}
+.hero{border-bottom:1px solid var(--line)}
+.hero p{margin:8px 0 0;max-width:70ch}
+.stores{border-bottom:1px solid var(--line);padding-top:14px;padding-bottom:14px}
+.sbar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.btn2{min-height:36px;font-size:13px;border-width:1px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.chip{min-height:36px;padding:0 12px;border:1px solid var(--line);border-radius:18px;font-weight:600;font-size:14px;background:var(--bg);color:var(--ink)}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip span{font-weight:400;opacity:.7;margin-left:4px}
+.snip{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;font-size:13px}
+.snip code{background:var(--panel);border:1px solid var(--line);padding:6px 8px;border-radius:6px;overflow-wrap:anywhere}
+.desk{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:24px;align-items:start}
 .board{border-top:2px solid var(--ink)}
-.row{display:grid;grid-template-columns:minmax(0,1.4fr) 120px minmax(0,1.3fr) 130px 120px;gap:12px;align-items:center;padding:10px 6px;border-bottom:1px solid var(--line);cursor:pointer;width:100%;text-align:left;background:none;border-left:0;border-right:0;border-top:0;border-radius:0;font-weight:400;min-height:58px}
+.row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) minmax(0,1.2fr) 150px;gap:14px;align-items:center;padding:12px 6px;border:0;border-bottom:1px solid var(--line);border-radius:0;cursor:pointer;width:100%;text-align:left;background:none;font-weight:400;min-height:64px}
 .row:hover,.row.sel{background:var(--panel)}
-.row .nm b{display:block;font-size:15px}.row .nm span{font-size:13px;color:var(--mute)}
-.call{font:15px/1 Anton,Impact,sans-serif;letter-spacing:.02em;padding:7px 9px;border-radius:4px;display:inline-block;white-space:nowrap;color:#fff}
-.c-BUY{background:var(--buy)}.c-WAIT{background:var(--wait)}.c-STOCK{background:var(--stock);box-shadow:inset 0 0 0 2px var(--y)}.c-BUYONLY,.c-NO{background:var(--mute)}
-.best b{font-size:15px;font-variant-numeric:tabular-nums}.best span{display:block;font-size:13px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.odds{display:grid;gap:3px}
-.odds div{display:grid;grid-template-columns:28px 1fr 34px;gap:4px;align-items:center;font-size:12px;color:var(--mute)}
-.odds i{height:6px;background:var(--line);border-radius:3px;position:relative;overflow:hidden}
-.odds i::after{content:"";position:absolute;inset:0 auto 0 0;width:var(--w);background:var(--wait)}
-.rng{position:relative;height:8px;background:var(--line);border-radius:4px;margin:8px 0 4px}
+.row .nm b{display:block;font-size:16px}.row .nm span{font-size:13px;color:var(--mute)}
+.best b{font:24px/1 Anton,Impact,sans-serif;font-weight:400}
+.best .s{display:block;font-size:13px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.runners{font-size:13px;color:var(--mute)}
+.runners div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.low{display:inline-block;font-size:12px;font-weight:800;color:var(--good);background:color-mix(in srgb,var(--good) 14%,transparent);padding:2px 6px;border-radius:4px;margin-top:4px}
+.rng{position:relative;height:8px;background:var(--line);border-radius:4px;margin:6px 0 4px}
 .rng i{position:absolute;top:-4px;width:4px;height:16px;background:var(--ink);transform:translateX(-2px)}
-.rng+span{font-size:12px;color:var(--mute);white-space:nowrap}
+.rngl{font-size:12px;color:var(--mute);white-space:nowrap}
 .detail{position:sticky;top:12px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
 .dh{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
 .tag{background:var(--y);color:var(--yk);font-family:Anton,Impact,sans-serif;padding:6px 18px 8px 12px;line-height:1;white-space:nowrap;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,0 100%)}
 .tag .d{font-size:46px}.tag sup{font-size:22px;vertical-align:top;position:relative;top:3px;text-decoration:underline}.tag .c{font-size:22px;vertical-align:top;position:relative;top:3px}
-.why{margin:10px 0;font-size:15px}
-.fig{position:relative;height:280px;margin:8px 0}
+.fig{position:relative;height:260px;margin:8px 0}
 .fig canvas{position:absolute;inset:0;width:100%;height:100%}
 .leg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px}
 .leg i{display:inline-block;width:12px;height:3px;margin-right:5px;vertical-align:middle}
@@ -70,47 +75,29 @@ table{width:100%;border-collapse:collapse;font-size:14px}
 th{text-align:left;font-size:13px;color:var(--mute);font-weight:600;border-bottom:2px solid var(--ink);padding:6px;white-space:nowrap}
 th.r{text-align:right}
 td{padding:6px;border-bottom:1px solid var(--line);vertical-align:top}
-.v{font-size:12px;font-weight:800;padding:2px 6px;border-radius:4px;white-space:nowrap}
-.v-good{background:color-mix(in srgb,var(--buy) 18%,transparent);color:var(--buy)}
-.v-meh{background:color-mix(in srgb,var(--mute) 18%,transparent);color:var(--mute)}
-.v-bad{background:color-mix(in srgb,var(--dn) 16%,transparent);color:var(--dn)}
-.calc{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;padding:12px;border:1px solid var(--line);border-radius:8px;margin-top:12px}
-.calc input{width:90px}
-.calc output{font:22px/1.1 Anton,Impact,sans-serif}
-.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px}
-.card{border:1px solid var(--line);border-radius:10px;padding:16px;background:var(--panel)}
+.src{font-size:12px;font-weight:700;padding:2px 6px;border-radius:4px;background:color-mix(in srgb,var(--ink) 9%,transparent);white-space:nowrap}
+.src.in-store{background:color-mix(in srgb,var(--good) 16%,transparent);color:var(--good)}
 .empty{padding:28px 12px;color:var(--mute);text-align:center}
-.stores{border-bottom:1px solid var(--line);padding-top:16px;padding-bottom:16px}
-.sbar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
-.sbar b{font-size:16px}
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
-.chip{min-height:36px;padding:0 12px;border:1px solid var(--line);border-radius:18px;font-weight:600;font-size:14px;background:var(--bg);color:var(--ink)}
-.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.chip span{font-weight:400;opacity:.7;margin-left:4px}
-.btn2{min-height:36px;font-size:13px;border-width:1px}
-.snip{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;font-size:13px}
-.snip code{background:var(--panel);border:1px solid var(--line);padding:6px 8px;border-radius:6px;overflow-wrap:anywhere}
-.foot{font-size:13px;color:var(--mute);border-top:1px solid var(--line)}
+.warnbar{background:color-mix(in srgb,var(--warn) 12%,var(--bg));border:1px solid var(--warn);color:var(--ink);border-radius:8px;padding:10px 14px;margin-top:12px;font-size:14px}
+.foot{font-size:14px;color:var(--mute);border-top:1px solid var(--line)}
 .foot p{max-width:80ch}
 @media(max-width:1100px){.desk{grid-template-columns:minmax(0,1fr)}.detail{position:static}}
-@media(max-width:700px){.row{grid-template-columns:minmax(0,1fr) auto;row-gap:6px}.row .odds,.row .rngc{display:none}.row .best{grid-column:1/-1}.hero{grid-template-columns:minmax(0,1fr)}table{font-size:13px}th,td{padding:5px 4px}}
+@media(max-width:700px){.row{grid-template-columns:minmax(0,1fr) auto}.row .runners,.row .rc{display:none}table{font-size:13px}th,td{padding:5px 4px}}
 </style>
 </head>
 <body>
 <header class="top">
-  <div class="brand"><div class="logo">GRX</div><div><b>Grocery Exchange</b><span class="fresh" id="where">Loading…</span></div></div>
-  <span class="fresh" id="fresh"></span>
+  <div class="brand"><div class="logo">GRX</div><div><b>Grocery Exchange</b><span class="where" id="where">Loading…</span></div></div>
+  <div class="health" id="health"></div>
 </header>
 
 <section class="band hero">
-  <div>
-    <h1 id="headline">When to buy groceries near you</h1>
-    <p class="mu" id="sub" style="margin:8px 0 0">Real flyer, shelf and official prices, checked every hour.</p>
-  </div>
-  <div class="tally" id="tally"></div>
+  <h1 id="headline">The cheapest staples near you, right now</h1>
+  <p class="mu" id="sub">Every price below is a real listing from a flyer, a store's website, or a shopper's receipt. Nothing is estimated or predicted.</p>
+  <div class="warnbar" id="warn" hidden></div>
 </section>
 
-<section class="band stores" id="stores">
+<section class="band stores">
   <div class="sbar">
     <b id="scount">All stores</b>
     <button class="btn2" id="pick" aria-expanded="false">Choose your stores</button>
@@ -121,36 +108,22 @@ td{padding:6px;border-bottom:1px solid var(--line);vertical-align:top}
   <div id="picker" hidden>
     <label for="sfind" style="margin-top:12px;max-width:320px">Find a store<input id="sfind" type="search" placeholder="T&amp;T, No Frills…"></label>
     <div class="chips" id="chips"></div>
-    <div class="snip"><span>Make phone alerts use these stores too: copy this line into</span><a id="cfg" href="#">config.json</a><code id="snip"></code><button class="btn2" id="copy">Copy</button></div>
+    <div class="snip"><span>To make phone alerts use these stores too, paste this line into</span><a id="cfg" href="#">config.json</a><code id="snip"></code><button class="btn2" id="copy">Copy</button></div>
   </div>
 </section>
 
 <main class="band desk">
   <section>
-    <div class="ctl">
-      <label for="q">Search<input id="q" type="search" placeholder="eggs, coffee…"></label>
-      <label for="cat">Aisle<select id="cat"><option value="">All aisles</option></select></label>
-      <label for="act">Call<select id="act"><option value="">All calls</option><option>STOCK UP</option><option>WAIT</option><option>BUY</option><option>BUY ONLY IF NEEDED</option></select></label>
-    </div>
     <div class="board" id="board"></div>
   </section>
-  <aside class="detail" id="detail"><div class="empty">Pick a grocery to see its chart, every store's price this week, and the sale odds.</div></aside>
+  <aside class="detail" id="detail"><div class="empty">Pick a grocery to see every current price and its price history.</div></aside>
 </main>
 
-<section class="band">
-  <div class="grid3">
-    <div class="card"><h2>Price-match plan</h2><p class="mu sm" style="margin-top:-4px">Competitor flyer prices you can ask these stores to match. Identical item and size required, house brands excluded. Bring the flyer on your phone.</p><div id="match"></div></div>
-    <div class="card"><h2>Shrinkflation watch</h2><p class="mu sm" style="margin-top:-4px">Same product, smaller package, about the same shelf price.</p><div id="shrink"></div></div>
-    <div class="card"><h2>Lockstep radar</h2><p class="mu sm" style="margin-top:-4px">Regular-price hikes by two chains within 3 days of each other, versus what chance alone would produce. A correlation flag, not proof of anything.</p><div id="lock"></div></div>
-  </div>
-</section>
-
-<footer class="band foot" id="foot">
-  <h2 style="color:var(--ink)">How the calls work</h2>
-  <p><b>Sources.</b> Live flyer and online prices come from Flipp's public search, for every flyer serving the postal areas inside your radius. Daily shelf prices since February 2024 for Loblaws, No Frills, Metro, Walmart, Voila, T&amp;T, Galleria and Save-On-Foods come from Project Hammer (projecthammer.org / jacobfilipp.com). Official monthly averages come from Statistics Canada table 18-10-0245-01, built from retailers' checkout data. Prices are compared per kilogram, litre, egg or roll, so pack sizes don't fool you.</p>
-  <p><b>Sale odds.</b> For each chain and item we find past sale episodes (price at least 7% under its trailing regular price, or below the printed "was" price), measure the gaps between them, and fit a Kaplan–Meier survival curve, counting the time since the last sale as a censored observation. Items with few sales borrow from their aisle. "WAIT" means a chain has at least a 50% chance of a sale within 14 days that would save 8% or more. "STOCK UP" means today's best price is at its 90-day low; the quantity covers the expected gap to the next sale, capped by shelf life.</p>
-  <p><b>Real in-store prices.</b> Prices marked "in store" are shopper-submitted receipts and shelf tags from <a href="https://prices.openfoodfacts.org">Open Prices</a> (Open Food Facts), used under the ODbL. They show the exact store and date. Every receipt you add there with the Open Food Facts app or website appears here within the hour and helps everyone. <a href="https://prices.openfoodfacts.org/app">Add a price</a>.</p>
-  <p><b>Fine print.</b> Prices marked ~ had no size printed in the flyer and assume the standard pack (a dozen eggs). Flyer prices can differ by store and may need a loyalty card. Always check the shelf tag. Not affiliated with any retailer or with Flipp.</p>
+<footer class="band foot">
+  <h2 style="color:var(--ink)">Where every number comes from</h2>
+  <p><b>Flyer and online prices</b>: Flipp's public flyer search, for every flyer serving the postal areas inside your radius, checked hourly (every 6 hours for the whole radius, hourly on Thursday nights when flyers change). Online prices are Walmart.ca only. <b>Everyday shelf prices</b>: Project Hammer's daily record of the store-pickup prices at Toronto stores of No Frills, Loblaws, Metro, Walmart, Sobeys/Voilà, T&amp;T, Galleria and Save-On-Foods, reloaded within the hour of each daily update. <b>In-store prices</b>: shopper receipts and shelf-tag photos from <a href="https://prices.openfoodfacts.org">Open Prices</a> (Open Food Facts, ODbL); <a href="https://prices.openfoodfacts.org/app">add yours</a>. <b>Official average</b>: Statistics Canada table 18-10-0245-01.</p>
+  <p><b>How a price gets on this page.</b> It must match the grocery's definition (for example, large eggs, not medium, liquid or boiled), print a clear size (listings with size ranges or several products at different sizes are skipped, and sizes are never assumed), fall within a sanity range for that grocery, and agree with the other sources: a price far from every other price for the same item is treated as a reading error and hidden. Prices are compared per kilogram, litre or egg.</p>
+  <p><b>Limits.</b> Flyer prices can need a loyalty card or a multi-buy, shown next to the price. Shelf prices are a day old at most. Distances are to the postal area a flyer serves, not to the store's door. Not affiliated with any retailer or with Flipp. Always check the shelf tag.</p>
 </footer>
 
 <script>
@@ -158,139 +131,110 @@ td{padding:6px;border-bottom:1px solid var(--line);vertical-align:top}
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const m2=v=>'$'+(+v).toFixed(2);
-const pc=v=>(v>=0?'+':'−')+Math.abs(v*100).toFixed(0)+'%';
 const PAL=['#d7141a','#1f5fbf','#0b7a3b','#8a4bd6','#e07b00','#00838f','#6d4c41','#c2185b','#455a64'];
-let B=null,H={},sel=null,MINE=null,V2C={};
 const DISC=['No Frills','Food Basics','FreshCo','Walmart','Giant Tiger','Real Canadian Superstore','Wholesale Club'];
 const ASIAN=['T&T','H Mart','Galleria','Btrust Supermarket','Oceans Fresh Food Market','Foody Mart','Bestco Foodmart','Winco Food Mart','Seasons Food Mart','Tone Tai Supermarket','Skyland Food Mart','Food Depot Supermarket','Al Premium Food Mart','Terra Foodmart','Moonlight Grocers','Starsky'];
+let B=null,H={},sel=null,MINE=null,V2C={},VIEW=[];
 const has=c=>!MINE||MINE.has(c);
-const OTHER=/healthy planet|london drugs|well\.ca|staples|ren's pets|shoppers drug|rexall|canadian tire|pharmasave|nature's source|amazon|best buy|petsmart|pet valu|dollarama/i;
 const saveMine=()=>{try{localStorage.setItem('grx-stores',JSON.stringify(MINE?[...MINE]:null))}catch(e){}};
-function fmtU(it,x){return '$'+(x*it.show).toFixed(2)+' '+it.show_label}
-function callJS(it,vendors,offers){
-  const cands=offers.filter(o=>!(o.pack&&o.pack>4*it.show)).map(o=>[o.unit_price,o.merchant,o.kind]);
-  const shelf=vendors.filter(v=>v.src==='shelf');
-  shelf.filter(v=>v.now&&(v.stale_days||0)<=5).forEach(v=>cands.push([v.now,v.v,'shelf']));
-  if(!cands.length)return{action:'NO DATA',reason:'None of your stores has a current price for this.'};
-  cands.sort((a,b)=>a[0]-b[0]);const [best,where,kind]=cands[0],f=x=>fmtU(it,x);
-  const fut=shelf.filter(v=>v.exp&&v.p14!=null&&!v.on_sale).map(v=>[v.p14*v.exp+(1-v.p14)*v.now,v.exp,v.p14,v.v]).sort((a,b)=>a[0]-b[0]);
-  const mn=a=>a.length?Math.min(...a):null,low90=mn(shelf.filter(v=>v.lo90).map(v=>v.lo90)),med90=mn(shelf.filter(v=>v.med90).map(v=>v.med90));
-  const gap=mn(shelf.filter(v=>v.gap).map(v=>v.gap))||28,cover=Math.min(it.shelf,gap*1.15),qty=Math.max(1,Math.ceil(cover/it.use));
-  const r={best,where,kind,low90,med90};
-  if(fut.length){const [,exp,p14,v]=fut[0],sv=1-exp/best;if(p14>=.5&&sv>=.08)return{...r,action:'WAIT',reason:`${v} has a ${Math.round(p14*100)}% chance of a sale within 14 days at about ${f(exp)}, ${Math.round(sv*100)}% under today's best (${f(best)} at ${where}).`}}
-  if(low90&&best<=low90*1.03&&(med90==null||best<=med90*.92))return{...r,action:'STOCK UP',qty,reason:`${f(best)} at ${where} is at the 90-day low for your stores. It keeps about ${it.shelf} days and the next comparable sale is ~${Math.round(gap)} days out, so buy ${qty} × ${it.show_label.replace('per ','')}.`};
-  if(low90&&best>low90*1.15)return{...r,action:'BUY ONLY IF NEEDED',reason:`Best at your stores today is ${f(best)} at ${where}, ${Math.round((best/low90-1)*100)}% above its 90-day low (${f(low90)}), and no sale is clearly due. Buy what you need, not more.`};
-  return{...r,action:'BUY',reason:`${f(best)} at ${where} is a fair price for your stores and no deeper sale looks imminent.`};
+const ago=h=>h==null?'unknown':h<1.5?Math.round(h*60)+' min ago':h<48?Math.round(h)+' h ago':Math.round(h/24)+' days ago';
+function source(o){
+  if(o.kind==='flyer')return`flyer, until ${esc(o.valid_to||'?')}`;
+  if(o.kind==='online')return'Walmart.ca online';
+  if(o.kind==='shelf')return`shelf price, ${esc(o.date||'')}`;
+  if(o.kind==='in-store')return`in store ${esc(o.date||'')} (${o.proof==='RECEIPT'?'receipt':'shelf tag'})`;
+  return esc(o.kind);
 }
+function where(o){return esc(o.merchant)+(o.store&&o.store!==o.merchant?' · '+esc(o.store):'')}
 function view(it){
-  const offers=it.offers.filter(o=>has(o.chain)),vendors=it.vendors.filter(v=>has(v.chain));
-  return{...it,offers,vendors,call:callJS(it,vendors,offers),n_offers:offers.length};
+  const offers=it.offers.filter(o=>has(o.chain)),shelf=it.shelf.filter(s=>has(s.chain));
+  const low=shelf.length?Math.min(...shelf.map(s=>s.low)):null,high=shelf.length?Math.max(...shelf.map(s=>s.high)):null;
+  return{...it,offers,shelfv:shelf,low,high,best:offers[0]||null};
 }
-let VIEW=[];
-function recompute(){VIEW=B.items.map(view);storesBar();header();board();detail();lists()}
+function header(){
+  const h=B.health,c=[];
+  c.push(`<span class="hc${h.flyers.ok?'':' bad'}">Flyers ${ago(h.flyers.age_h)}</span>`);
+  c.push(`<span class="hc${h.shelf.ok?'':' bad'}">Shelf prices ${h.shelf.last_load?String(h.shelf.last_load).slice(0,10):ago(h.shelf.age_h)}</span>`);
+  c.push(`<span class="hc">${h.in_store.rows} in-store prices</span>`);
+  $('#health').innerHTML=c.join('');
+  $('#where').textContent=`${B.home.label||B.home.fsa} · ${B.home.radius_km} km radius`;
+  const w=[];if(!h.flyers.ok)w.push(`Flyer prices were last refreshed ${ago(h.flyers.age_h)}, later than the usual hour. They're still valid until the dates shown, but may be missing this week's newest deals.`);
+  if(!h.shelf.ok)w.push(`Everyday shelf prices are older than usual (${ago(h.shelf.age_h)}).`);
+  $('#warn').hidden=!w.length;$('#warn').textContent=w.join(' ');
+  const nLow=VIEW.filter(i=>i.best&&i.low!=null&&i.best.unit_price<=i.low+1e-9).length;
+  $('#headline').textContent=`The cheapest staples near ${B.home.label||'you'}, right now`;
+  const stores=new Set(VIEW.flatMap(i=>i.offers.map(o=>o.chain))).size;
+  $('#sub').textContent=`${VIEW.length} staples, ${stores} ${MINE?'of your chosen ':''}stores, updated ${ago((Date.now()-Date.parse(B.generated))/36e5)}. ${nLow?nLow+' '+(nLow===1?'is':'are')+' at or below the lowest shelf price of the past 90 days. ':''}Every price is a real listing; nothing is estimated or predicted.`;
+}
 function storesBar(){
   const n=B.chains.length,k=MINE?B.chains.filter(c=>MINE.has(c.name)).length:n;
   $('#scount').textContent=MINE?`Showing ${k} of ${n} stores`:`Showing all ${n} stores`;
   const q=($('#sfind').value||'').toLowerCase();
-  const chip=c=>`<button class="chip${has(c.name)&&MINE?' on':''}" data-c="${esc(c.name)}" aria-pressed="${has(c.name)&&!!MINE}">${esc(c.name)}<span>${c.offers||'history'}</span></button>`;
-  const vis=B.chains.filter(c=>!q||c.name.toLowerCase().includes(q)),g=vis.filter(c=>!OTHER.test(c.name)),o=vis.filter(c=>OTHER.test(c.name));
-  $('#chips').innerHTML=g.map(chip).join('')+(o.length?`<div class="mu sm" style="flex-basis:100%;margin-top:8px">Online shops, pharmacies and others</div>`+o.map(chip).join(''):'');
-  const list=MINE?[...MINE]:[];$('#snip').textContent=`"my_stores": ${JSON.stringify(list)},`;
+  $('#chips').innerHTML=B.chains.filter(c=>!q||c.name.toLowerCase().includes(q)).map(c=>`<button class="chip${MINE&&MINE.has(c.name)?' on':''}" data-c="${esc(c.name)}" aria-pressed="${!!(MINE&&MINE.has(c.name))}">${esc(c.name)}<span>${c.offers||'shelf'}</span></button>`).join('');
+  $('#snip').textContent=`"my_stores": ${JSON.stringify(MINE?[...MINE]:[])},`;
   $('#cfg').href=`https://github.com/${B.repo||'clementc52/grx'}/edit/main/config.json`;
 }
-const callCls=a=>'c-'+(a||'NO').split(' ')[0]+(a==='BUY ONLY IF NEEDED'?'ONLY':'');
-
-function ago(iso){if(!iso)return'never';const m=(Date.now()-Date.parse(iso))/6e4;return m<90?Math.round(m)+' min ago':m<2880?Math.round(m/60)+' h ago':Math.round(m/1440)+' days ago'}
-function header(){
-  const s=B.sources;$('#where').textContent=`${B.home.label||B.home.fsa} · ${B.home.radius_km} km radius`;
-  $('#fresh').textContent=`Flyers ${ago(s.flipp.at)} · ${s.flipp.rows.toLocaleString()} live prices from ${s.flipp.merchants} stores${s.hammer&&s.hammer.last_load?' · shelf history to '+String(s.hammer.last_load).slice(0,10):''}`;
-  const n=a=>VIEW.filter(i=>i.call.action===a).length;
-  const top=VIEW.filter(i=>i.call.action==='STOCK UP').map(i=>i.label.toLowerCase());
-  $('#headline').textContent=top.length?`Stock up on ${top.slice(0,3).join(', ')}${top.length>3?' and '+(top.length-3)+' more':''} this week`:'Nothing at a 90-day low this week: buy what you need';
-  $('#sub').textContent=`${B.items.length} groceries tracked across ${MINE?'your '+MINE.size+' chosen stores':'every store'} within ${B.home.radius_km} km of ${B.home.label||B.home.fsa}. Updated ${ago(B.generated)}.`;
-  $('#tally').innerHTML=[['STOCK UP','Stock up'],['WAIT','Wait'],['BUY','Buy'],['BUY ONLY IF NEEDED','Overpriced']].map(([a,l])=>`<div><b>${n(a)}</b><span>${l}</span></div>`).join('');
-  if($('#cat').options.length<2){const cats=[...new Set(B.items.map(i=>i.cat))];$('#cat').innerHTML='<option value="">All aisles</option>'+cats.map(c=>`<option>${esc(c)}</option>`).join('')}
-}
-function bestOdds(it){const v=it.vendors.filter(v=>v.p14!=null);if(!v.length)return null;return v.reduce((a,b)=>b.p14>a.p14?b:a)}
 function board(){
-  const q=$('#q').value.trim().toLowerCase(),c=$('#cat').value,a=$('#act').value;
-  const order={'STOCK UP':0,'WAIT':1,'BUY':2,'BUY ONLY IF NEEDED':3,'NO DATA':4};
-  const all=VIEW.filter(i=>(!q||i.label.toLowerCase().includes(q)||i.id.includes(q))&&(!c||i.cat===c)&&(!a||i.call.action===a)).sort((x,y)=>order[x.call.action]-order[y.call.action]||x.label.localeCompare(y.label));
-  const items=all.filter(i=>i.call.action!=='NO DATA'),waiting=all.filter(i=>i.call.action==='NO DATA');
-  $('#board').innerHTML=items.length?items.map(it=>{
-    const k=it.call,o=bestOdds(it),lo=k.low90,hi=Math.max(...it.vendors.filter(v=>v.hi90).map(v=>v.hi90),0);
-    const pos=k.best&&lo&&hi>lo?Math.min(100,Math.max(0,(k.best-lo)/(hi-lo)*100)):null;
+  $('#board').innerHTML=VIEW.map(it=>{
+    const b=it.best,f=x=>m2(x*it.show);
+    const isLow=b&&it.low!=null&&b.unit_price<=it.low+1e-9;
+    const pos=b&&it.low!=null&&it.high>it.low?Math.min(100,Math.max(0,(b.unit_price-it.low)/(it.high-it.low)*100)):null;
+    const run=it.offers.slice(1,3).map(o=>`<div>${f(o.unit_price)} · ${where(o)}</div>`).join('');
     return `<button class="row${sel===it.id?' sel':''}" data-id="${it.id}">
-      <span class="nm"><b>${esc(it.label)}</b><span>${esc(it.cat)} · ${it.n_offers} live prices</span></span>
-      <span><span class="call ${callCls(k.action)}">${esc(k.action)}</span></span>
-      <span class="best">${k.best?`<b>${m2(k.best*it.show)}</b> <span class="mu sm">${esc(it.show_label)}</span><span>${esc(k.where)}</span>`:'<span>No price yet</span>'}</span>
-      <span class="odds">${o?[7,14,28].map(h=>`<div>${h}d<i style="--w:${Math.round(o['p'+h]*100)}%"></i>${Math.round(o['p'+h]*100)}%</div>`).join(''):'<span class="mu sm">Sale odds after more history</span>'}</span>
-      <span class="rngc">${pos!=null?`<div class="rng"><i style="left:${pos}%"></i></div><span>90-day ${m2(lo*it.show)}–${m2(hi*it.show)}</span>`:''}</span>
-    </button>`}).join('')+(waiting.length?`<p class="mu sm" style="padding:10px 6px">No price in range yet for ${waiting.map(i=>esc(i.label.toLowerCase())).join(', ')}.</p>`:''):(waiting.length?`<p class="mu sm" style="padding:10px 6px">No price in range yet for ${waiting.map(i=>esc(i.label.toLowerCase())).join(', ')}.</p>`:'<div class="empty">No groceries match. Clear the filters.</div>');
+      <span class="nm"><b>${esc(it.label)}</b><span>${esc(it.show_label)}</span></span>
+      <span class="best">${b?`<b>${f(b.unit_price)}</b><span class="s">${where(b)} · <span class="mu">${source(b)}</span></span>${isLow?'<span class="low">At or below 90-day low</span>':''}`:'<span class="mu">No current price at your stores</span>'}</span>
+      <span class="runners">${run||''}</span>
+      <span class="rc">${pos!=null?`<div class="rng"><i style="left:${pos}%"></i></div><span class="rngl">90-day shelf ${f(it.low)}–${f(it.high)}</span>`:''}</span>
+    </button>`}).join('')||'<div class="empty">No groceries.</div>';
 }
 function tag(v){const [d,c]=(+v).toFixed(2).split('.');return `<span class="c">$</span><span class="d">${d}</span><sup>${c}</sup>`}
-function verdictChip(v){if(!v)return'';const cls=v.tag==='Not really a sale'?'v-bad':v.tag==='Normal sale'?'v-meh':'v-good';return `<span class="v ${cls}" title="vs this chain's 90-day median">${esc(v.tag)} ${pc(v.vs_median)}</span>`}
 function detail(){
-  const it=VIEW.find(i=>i.id===sel);if(!it)return;
-  const k=it.call,s=it.statcan;
-  const offers=it.offers.map(o=>`<tr><td>${esc(o.merchant)}<div class="mu sm">${o.store&&o.store!==o.merchant?esc(o.store)+' · ':''}${esc(o.name)}${o.story?' · '+esc(o.story):''}</div></td><td class="r">${o.km!=null?o.km+' km':''}</td><td class="r"><b>${o.assumed?'~':''}${m2(o.unit_price*it.show)}</b><div class="mu sm">${o.pre?esc(o.pre)+' ':''}${m2(o.price)}${o.post?' '+esc(o.post):''}</div></td><td>${o.bulk?'<span class="v v-meh">bulk pack</span> ':''}${o.kind==='online'?'<span class="v v-meh">online</span>':o.kind==='in-store'?`<span class="v v-good" title="Shopper-submitted ${o.proof==='RECEIPT'?'receipt':'shelf tag'} via Open Prices">in store ${esc(o.date||'')}</span>`:verdictChip(o.verdict)}</td></tr>`).join('');
-  const vend=it.vendors.map(v=>`<tr><td>${esc(v.v)}<div class="mu sm">${v.src==='flyer'?'from flyer history':v.on_sale?'on sale now':'regular price'}</div></td><td class="r">${v.now?m2(v.now*it.show):v.lo_seen?'low '+m2(v.lo_seen*it.show):''}</td><td class="r">${[7,14,28].map(h=>v['p'+h]!=null?Math.round(v['p'+h]*100)+'%':'–').join(' / ')}</td><td class="r">${v.gap?'~'+Math.round(v.gap)+' d':''}</td><td class="r">${v.exp?m2(v.exp*it.show):''}</td></tr>`).join('');
-  $('#detail').innerHTML=`<div class="dh"><div><h2 style="margin:0">${esc(it.label)}</h2><div class="mu sm">${esc(it.show_label)} · ${esc(it.cat)}</div></div>${k.best?`<div class="tag">${tag(k.best*it.show)}</div>`:''}</div>
-    <p class="why"><span class="call ${callCls(k.action)}">${esc(k.action)}</span> ${esc(k.reason)}</p>
-    ${s?`<p class="sm mu">Official benchmark: StatCan ${esc(s.geo)} average for ${esc(s.month)}, ${esc(s.product)}: <b style="color:var(--ink)">${s.raw!=null?m2(s.raw):m2(s.avg*it.show)}</b>${s.yoy!=null?` (${pc(s.yoy)} over 12 months)`:''}.</p>`:''}
+  const it=VIEW.find(i=>i.id===sel);if(!it)return;const f=x=>m2(x*it.show),s=it.statcan;
+  const rows=it.offers.map(o=>`<tr><td>${where(o)}<div class="mu sm">${esc(o.name)}${o.story?' · '+esc(o.story):''}</div></td><td class="r"><b>${f(o.unit_price)}</b>${o.price?`<div class="mu sm">${o.pre?esc(o.pre)+' ':''}${m2(o.price)}${o.post?' '+esc(o.post):''}</div>`:''}</td><td><span class="src ${o.kind}">${source(o)}</span>${o.km?`<div class="mu sm">${o.km} km area</div>`:''}</td></tr>`).join('');
+  $('#detail').innerHTML=`<div class="dh"><div><h2 style="margin:0">${esc(it.label)}</h2><div class="mu sm">${esc(it.show_label)}</div></div>${it.best?`<div class="tag">${tag(it.best.unit_price*it.show)}</div>`:''}</div>
+    ${it.best?`<p>Cheapest now: <b>${where(it.best)}</b>, ${source(it.best)}.${it.low!=null?` Over the past 90 days, shelf prices at ${it.shelfv.length} tracked chain${it.shelfv.length>1?'s':''} ranged ${f(it.low)} to ${f(it.high)}.`:''}</p>`:'<p class="mu">None of your stores has a current price for this.</p>'}
+    ${s?`<p class="sm mu">Official benchmark: StatCan ${esc(s.geo)} average for ${esc(s.month)}, ${esc(s.product)}: <b style="color:var(--ink)">${m2(s.value)}</b>.</p>`:''}
     <div class="fig"><canvas id="cv"></canvas></div><div class="leg" id="leg"></div>
-    <div class="calc"><label for="use">One ${esc(it.show_label.replace('per ',''))} lasts you (days)<input id="use" type="number" min="1" value="${it.use}"></label><div><div class="mu sm">Buy at this price</div><output id="qty"></output></div></div>
-    <h3>Every price this week, cheapest first</h3><div class="scroll"><table><thead><tr><th>Store</th><th class="r">From you</th><th class="r">${esc(it.show_label)}</th><th>Deal check</th></tr></thead><tbody>${offers||'<tr><td colspan="4" class="empty">No live prices in range yet.</td></tr>'}</tbody></table></div>
-    <h3>Sale odds by chain</h3><div class="scroll"><table><thead><tr><th>Chain</th><th class="r">Now</th><th class="r">Sale in 7 / 14 / 28 d</th><th class="r">Typical gap</th><th class="r">Typical sale</th></tr></thead><tbody>${vend||'<tr><td colspan="5" class="empty">Odds appear once a chain has sale history.</td></tr>'}</tbody></table></div>`;
-  const qty=()=>{const u=Math.max(1,+$('#use').value||it.use),gap=Math.min(...it.vendors.filter(v=>v.gap).map(v=>v.gap),28),cover=Math.min(it.shelf,gap*1.15),q=Math.max(1,Math.ceil(cover/u));$('#qty').textContent=k.action==='STOCK UP'?`${q} × (${Math.round(cover)} days)`:k.action==='WAIT'?'Just what you need':`${Math.max(1,Math.ceil(Math.min(cover,14)/u))} for now`};
-  $('#use').addEventListener('input',qty);qty();draw(it);
+    <h3>Every current price, cheapest first</h3><div class="scroll"><table><thead><tr><th>Store</th><th class="r">${esc(it.show_label)}</th><th>Source</th></tr></thead><tbody>${rows||'<tr><td colspan="3" class="empty">No current prices at your stores.</td></tr>'}</tbody></table></div>
+    ${it.dropped?`<p class="mu sm">${it.dropped} listing${it.dropped>1?'s were':' was'} hidden because ${it.dropped>1?'they':'it'} disagreed sharply with every other source (likely a misprint or a misread size).</p>`:''}`;
+  draw(it);
 }
 function draw(it){
   const cv=$('#cv');if(!cv)return;const W=cv.clientWidth,Ht=cv.clientHeight,dpr=devicePixelRatio||1;cv.width=W*dpr;cv.height=Ht*dpr;
-  const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);const cs=getComputedStyle(document.body),ink=cs.color,mute=getComputedStyle($('.mu')||document.body).color;
-  const h=H[it.id]||{},vs=Object.keys(h).filter(v=>has(V2C[v]||v));const leg=$('#leg');
-  if(!vs.length){x.fillStyle=mute;x.font='14px Archivo, sans-serif';x.fillText(MINE?'No daily shelf history for your chosen stores.':'Shelf-price history appears after the first daily history load.',10,30);leg.innerHTML='';return}
-  const day=s=>Date.parse(s)/864e5;let t0=1e9,t1=-1e9,lo=1e9,hi=-1e9;
-  const S=vs.map(v=>{const e=h[v],d0=day(e.d0);const pts=e.p.map((p,i)=>p==null?null:[d0+i,p*it.show]);pts.forEach(q=>{if(q){t0=Math.min(t0,q[0]);t1=Math.max(t1,q[0]);lo=Math.min(lo,q[1]);hi=Math.max(hi,q[1])}});return{v,pts}});
-  const off=it.offers.filter(o=>o.kind==='flyer').slice(0,12);off.forEach(o=>{lo=Math.min(lo,o.unit_price*it.show);hi=Math.max(hi,o.unit_price*it.show)});
-  const tNow=day(B.today);t1=Math.max(t1,tNow);t0=Math.max(t0,t1-365);
-  const pad=(hi-lo)*.1||1;lo-=pad;hi+=pad;const ml=4,mr=54,mt=8,mb=22,pw=W-ml-mr,ph=Ht-mt-mb;
-  const X=t=>ml+(t-t0)/(t1-t0||1)*pw,Y=v=>mt+(hi-v)/(hi-lo)*ph;
-  x.font='12px Archivo, sans-serif';x.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--line')?'rgba(128,128,128,.25)':'#ddd';
+  const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);const mute=getComputedStyle($('.mu')).color,ink=getComputedStyle(document.body).color;
+  const h=H[it.id]||{},vs=Object.keys(h).filter(v=>has(V2C[v]||v)),leg=$('#leg');
+  if(!vs.length){x.fillStyle=mute;x.font='14px Archivo, sans-serif';x.fillText('No daily shelf history for your chosen stores.',10,30);leg.innerHTML='';return}
+  const day=s=>Date.parse(s)/864e5;let lo=1e9,hi=-1e9;
+  const S=vs.map(v=>{const e=h[v],d0=day(e.d0),pts=e.p.map((p,i)=>p==null?null:[d0+i,p*it.show]);return{v,pts}});
+  const t1=day(B.today),t0=t1-365;
+  S.forEach(s=>s.pts.forEach(q=>{if(q&&q[0]>=t0){lo=Math.min(lo,q[1]);hi=Math.max(hi,q[1])}}));
+  it.offers.slice(0,10).forEach(o=>{lo=Math.min(lo,o.unit_price*it.show);hi=Math.max(hi,o.unit_price*it.show)});
+  if(lo>hi){lo=0;hi=1}const pad=(hi-lo)*.1||1;lo-=pad;hi+=pad;const ml=4,mr=54,mt=8,mb=22,pw=W-ml-mr,ph=Ht-mt-mb;
+  const X=t=>ml+(t-t0)/(t1-t0)*pw,Y=v=>mt+(hi-v)/(hi-lo)*ph;
+  x.font='12px Archivo, sans-serif';x.strokeStyle='rgba(128,128,128,.25)';
   const step=[.1,.25,.5,1,2,5,10,20,50].find(s=>(hi-lo)/s<=6)||100;
   for(let v=Math.ceil(lo/step)*step;v<=hi;v+=step){const y=Math.round(Y(v))+.5;x.beginPath();x.moveTo(ml,y);x.lineTo(ml+pw,y);x.stroke();x.fillStyle=mute;x.fillText('$'+v.toFixed(step<1?2:0),ml+pw+6,y+4)}
   const mon=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  for(let t=t0;t<=t1;t+=1){const d=new Date(t*864e5);if(d.getUTCDate()===1&&(d.getUTCMonth()%(W<520?3:2)===0)){x.fillStyle=mute;x.fillText(mon[d.getUTCMonth()],X(t)-10,Ht-6)}}
+  for(let t=Math.ceil(t0);t<=t1;t++){const d=new Date(t*864e5);if(d.getUTCDate()===1&&d.getUTCMonth()%(W<520?3:2)===0){x.fillStyle=mute;x.fillText(mon[d.getUTCMonth()],X(t)-10,Ht-6)}}
   S.forEach((s,i)=>{x.strokeStyle=PAL[i%PAL.length];x.lineWidth=1.6;x.beginPath();let on=0;s.pts.forEach(q=>{if(!q||q[0]<t0){on=0;return}on?x.lineTo(X(q[0]),Y(q[1])):x.moveTo(X(q[0]),Y(q[1]));on=1});x.stroke()});
-  off.forEach(o=>{x.fillStyle=ink;x.beginPath();x.arc(X(tNow),Y(o.unit_price*it.show),3.5,0,7);x.fill()});
-  leg.innerHTML=S.map((s,i)=>`<span><i style="background:${PAL[i%PAL.length]}"></i>${esc(s.v)}</span>`).join('')+(off.length?`<span><i style="background:var(--ink);height:7px;width:7px;border-radius:50%"></i>this week's flyers</span>`:'');
+  it.offers.filter(o=>o.kind!=='shelf').slice(0,10).forEach(o=>{x.fillStyle=ink;x.beginPath();x.arc(X(t1),Y(o.unit_price*it.show),3.5,0,7);x.fill()});
+  leg.innerHTML=S.map((s,i)=>`<span><i style="background:${PAL[i%PAL.length]}"></i>${esc(V2C[s.v]||s.v)}</span>`).join('')+`<span><i style="background:var(--ink);height:7px;width:7px;border-radius:50%"></i>today's flyer, online and in-store prices</span>`;
 }
-function lists(){
-  const MT=B.match.filter(m=>has(m.at));
-  $('#match').innerHTML=MT.length?`<div class="scroll"><table><thead><tr><th>At</th><th>Item</th><th class="r">Match to</th></tr></thead><tbody>${MT.slice(0,25).map(m=>`<tr><td>${esc(m.at)}</td><td>${esc(m.label)}<div class="mu sm">${esc(m.merchant)}: ${esc(m.name)}</div></td><td class="r"><b>${m2(m.unit_price*m.show)}</b><div class="mu sm">${m.own?'theirs '+m2(m.own*m.show):'not in their flyer'}</div></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">No matchable flyer prices this week.</div>';
-  const SH=B.shrink.filter(x=>has(V2C[x.vendor]||x.vendor));
-  $('#shrink').innerHTML=SH.length?`<div class="scroll"><table><thead><tr><th>Product</th><th class="r">Size</th><th class="r">Hidden hike</th></tr></thead><tbody>${SH.slice(0,15).map(s=>`<tr><td>${esc(s.name)}<div class="mu sm">${esc(s.vendor)} · ${esc(s.date)}</div></td><td class="r">${Math.round(s.size_before)} → ${Math.round(s.size_after)}</td><td class="r" style="color:var(--dn)"><b>${pc(s.hidden_increase)}</b></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">None detected in the tracked products.</div>';
-  const lab=id=>(B.items.find(i=>i.id===id)||{}).label||id;
-  const LK=B.lockstep.filter(l=>has(V2C[l.a]||l.a)||has(V2C[l.b]||l.b));
-  $('#lock').innerHTML=LK.length?`<div class="scroll"><table><thead><tr><th>Item</th><th>Chains</th><th class="r">Together / chance</th></tr></thead><tbody>${LK.slice(0,15).map(l=>`<tr><td>${esc(lab(l.item))}</td><td>${esc(l.a)} + ${esc(l.b)}</td><td class="r"><b>${l.co_moves}</b> / ${l.expected}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">No repeated lockstep hikes found.</div>';
-}
+function recompute(){VIEW=B.items.map(view);storesBar();header();board();detail()}
 function pick(id){sel=id;history.replaceState(null,'','#'+id);board();detail();if(innerWidth<1100)$('#detail').scrollIntoView({behavior:'smooth'})}
 $('#board').addEventListener('click',e=>{const r=e.target.closest('.row');if(r)pick(r.dataset.id)});
 $('#pick').addEventListener('click',()=>{const p=$('#picker');p.hidden=!p.hidden;$('#pick').setAttribute('aria-expanded',String(!p.hidden));$('#pick').textContent=p.hidden?'Choose your stores':'Done'});
 $('#sfind').addEventListener('input',storesBar);
 $('#chips').addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;const n=c.dataset.c;if(!MINE)MINE=new Set();MINE.has(n)?MINE.delete(n):MINE.add(n);if(!MINE.size)MINE=null;saveMine();recompute()});
-document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{const p=b.dataset.preset;MINE=p==='all'?null:new Set((p==='disc'?DISC:ASIAN).filter(n=>B.chains.some(c=>c.name===n)));saveMine();recompute()}));
+document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{const p=b.dataset.preset;MINE=p==='all'?null:new Set((p==='disc'?DISC:ASIAN).filter(n=>B.chains.some(c=>c.name===n)));if(MINE&&!MINE.size)MINE=null;saveMine();recompute()}));
 $('#copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('#snip').textContent);$('#copy').textContent='Copied'}catch(e){$('#copy').textContent='Select and copy'}});
-for(const id of ['#q','#cat','#act'])$(id).addEventListener('input',board);
-const ro=new ResizeObserver(()=>{const it=B&&VIEW.find(i=>i.id===sel);if(it)draw(it)});ro.observe($('#detail'));
+const ro=new ResizeObserver(()=>{const it=VIEW.find(i=>i.id===sel);if(it)draw(it)});ro.observe($('#detail'));
 Promise.all([fetch('data/board.json',{cache:'no-store'}).then(r=>r.json()),fetch('data/hist.json',{cache:'no-store'}).then(r=>r.json()).catch(()=>({}))]).then(([b,h])=>{
-  B=b;H=h;B.chains=B.chains||[];B.items.forEach(i=>i.vendors.forEach(v=>V2C[v.v]=v.chain));
+  B=b;H=h;Object.assign(V2C,B.vendors||{});B.items.forEach(i=>i.shelf.forEach(s=>V2C[s.v]=s.chain));
   let saved=null;try{saved=JSON.parse(localStorage.getItem('grx-stores')||'null')}catch(e){}
   MINE=saved?new Set(saved):(B.my_stores&&B.my_stores.length?new Set(B.my_stores):null);
-  VIEW=B.items.map(view);
-  const first=(location.hash.slice(1)&&VIEW.find(i=>i.id===location.hash.slice(1)))||VIEW.find(i=>i.call.action==='STOCK UP')||VIEW.find(i=>i.n_offers)||VIEW[0];
-  sel=first&&first.id;recompute();
-}).catch(()=>{$('#board').innerHTML='<div class="empty">No data yet. The first collection run publishes it within the hour.</div>';$('#where').textContent='Waiting for the first collection run'});
+  VIEW=B.items.map(view);const h0=location.hash.slice(1);sel=(VIEW.find(i=>i.id===h0)||VIEW[0]).id;recompute();
+}).catch(()=>{$('#board').innerHTML='<div class="empty">No data yet. The next collection run publishes it.</div>';$('#where').textContent='Waiting for data'});
 }
 </script>
 </body>

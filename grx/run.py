@@ -38,9 +38,10 @@ def cmd_flipp(full):
     fsas = geo.sweep(c["home_fsa"], c["radius_km"], c.get("max_fsas", 10)) if full else [(c["home_fsa"], 0.0)]
     print(f"Flipp sweep over {len(fsas)} FSAs: {[f for f, _ in fsas]}")
     rows, errors = flipp.collect(fsas)
-    if not rows:
-        print(f"No rows collected ({errors} errors); keeping previous data.")
-        return 1 if errors else 0
+    old_full = B.load(os.path.join(ROOT, "data/flipp/latest.json"), {"rows": []})
+    if not rows or (full and len(rows) < 0.4 * len(old_full.get("rows", []))):
+        print(f"::warning::Flipp sweep looks incomplete ({len(rows)} rows, {errors} errors vs {len(old_full.get('rows', []))} before); keeping previous data")
+        return 0
     month = time.strftime("%Y-%m")
     hist = os.path.join(ROOT, f"data/flipp/{month}.jsonl")
     os.makedirs(os.path.dirname(hist), exist_ok=True)
@@ -84,7 +85,7 @@ def cmd_hammer(if_new=False):
         print(f"Hammer has a new load ({old} -> {stamp}); reloading")
     with tempfile.TemporaryDirectory() as d:
         z = hammer.download(os.path.join(d, "h.zip"))
-        series, shrink, audit = hammer.parse(z, since_days=cfg().get("hammer_days", 730))
+        series, audit = hammer.parse(z, since_days=cfg().get("hammer_days", 730))
     try:
         with urllib.request.urlopen(hammer.LASTUPDATED, timeout=30) as r:
             last = r.read().decode().strip()[:40]
@@ -92,7 +93,6 @@ def cmd_hammer(if_new=False):
         last = None
     vendors = sorted({v for s in series.values() for v in s})
     write("data/hammer/series.json", series)
-    write("data/hammer/shrink.json", shrink)
     write("data/audit/hammer_cheapest.json", audit)   # committed: the products behind each shelf price
     for iid, vs in sorted(audit.items()):
         for v, xs in sorted(vs.items()):
@@ -101,7 +101,7 @@ def cmd_hammer(if_new=False):
                 print(f"  audit {iid:16} {v:12} {x['unit_price']:9.4f}  {x['price']}  [{x['units']}] {x['name'][:70]}")
     write("data/hammer/meta.json", {"fetched": dt.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"), "last_load": last,
                                      "vendors": vendors, "items": len(series)})
-    print(f"Hammer: {len(series)} items, vendors {vendors}, {len(shrink)} shrink events")
+    print(f"Hammer: {len(series)} items, vendors {vendors}")
 
 
 def cmd_openprices():
@@ -120,23 +120,26 @@ def cmd_statcan():
     print(f"StatCan: {len(avg)} catalog items mapped")
 
 
-def check_rules(board, rules):
-    hits = []
+def check_rules(board, rules, my_stores=None):
+    """Price rules only: "tell me when X is at or below $Y" at the stores you chose."""
+    hits, mine = [], set(my_stores or [])
     by = {i["id"]: i for i in board["items"]}
     for r in rules:
-        it = by.get(r["item"])
-        if not it or "best" not in it["call"]:
+        it = by.get(r.get("item"))
+        if not it or "below" not in r:
             continue
-        c, show = it["call"], it["show"]
-        price = c["best"] * show
-        why = None
-        if "below" in r and price <= r["below"]:
-            why = f"{it['label']} is ${price:.2f} {it['show_label']} at {c['where']} (your line: ${r['below']:.2f})"
-        if r.get("signal") and c["action"] == r["signal"]:
-            why = f"{it['label']}: {c['action']}. {c['reason']}"
-        if why:
-            key = f"{r['item']}|{r.get('below', r.get('signal'))}|{c['where']}|{round(price, 2)}"
-            hits.append({"key": key, "title": f"GRX alert: {it['label']} {c['action'] if r.get('signal') else 'under $' + format(r['below'], '.2f')}", "body": why})
+        offers = [o for o in it["offers"] if not mine or o.get("chain") in mine]
+        if not offers:
+            continue
+        o = min(offers, key=lambda x: x["unit_price"])
+        price = o["unit_price"] * it["show"]
+        if price <= r["below"]:
+            where = o["merchant"] + (f" ({o['store']})" if o.get("store") and o["store"] != o["merchant"] else "")
+            src = {"flyer": f"flyer price until {o.get('valid_to')}", "online": "online price", "shelf": f"shelf price on {o.get('date')}",
+                   "in-store": f"seen in store on {o.get('date')}"}.get(o["kind"], o["kind"])
+            key = f"{r['item']}|{r['below']}|{o['merchant']}|{round(price, 2)}|{o.get('valid_to') or o.get('date')}"
+            hits.append({"key": key, "title": f"GRX alert: {it['label']} at ${price:.2f}",
+                         "body": f"{it['label']} is ${price:.2f} {it['show_label']} at {where}, {src} (your line: ${r['below']:.2f})."})
     return hits
 
 
@@ -167,7 +170,8 @@ def cmd_alerts():
     if not board:
         return
     state = B.load(os.path.join(ROOT, "data/alerts_state.json"), {})
-    hits = [h for h in check_rules(board, cfg().get("watch", [])) if h["key"] not in state]
+    c = cfg()
+    hits = [h for h in check_rules(board, c.get("watch", []), c.get("my_stores")) if h["key"] not in state]
     for h in hits:
         print("ALERT:", h["body"])
         try:

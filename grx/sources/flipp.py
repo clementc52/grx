@@ -5,22 +5,35 @@ prices with validity dates) and ecom items (everyday online prices, mostly
 Walmart and a few others). No key required. Be polite: throttle requests.
 """
 import json
+import re
 import time
 import urllib.parse
 import urllib.request
 
 from .. import units
-from ..catalog import ITEMS, match, plausible
+from ..catalog import ITEMS, household, match, plausible
 
 URL = "https://backflipp.wishabi.com/flipp/items/search"
 UA = "Mozilla/5.0 (GRX grocery price research; +https://github.com/)"
 
 
-def fetch(term, postal, timeout=25):
+# Online-only shops and non-grocers: their prices aren't what you'd pay at a supermarket.
+NOT_GROCER = re.compile(r"healthy planet|london drugs|well\.ca|staples|ren'?s pets|pharmasave|canadian tire|nature'?s source|"
+                        r"amazon|best buy|petsmart|pet valu|dollarama|rexall|shoppers drug|bureau en gros|toys", re.I)
+ONLINE_OK = re.compile(r"^walmart", re.I)   # Walmart.ca online prices match its stores; other online sellers are skipped
+
+
+def fetch(term, postal, timeout=25, tries=3):
     q = urllib.parse.urlencode({"locale": "en-ca", "postal_code": postal, "q": term})
     req = urllib.request.Request(f"{URL}?{q}", headers={"User-Agent": UA, "Accept": "application/json"})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return json.loads(r.read().decode("utf-8"))
+    for k in range(tries):
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return json.loads(r.read().decode("utf-8"))
+        except Exception:
+            if k == tries - 1:
+                raise
+            time.sleep(2 * (k + 1))
 
 
 def rows_from(payload, item, fsa, dist_km, seen_at):
@@ -28,7 +41,8 @@ def rows_from(payload, item, fsa, dist_km, seen_at):
     out = []
     for it in payload.get("items") or []:
         name = it.get("name") or ""
-        if not name or not match(name, item):
+        merchant = (it.get("merchant_name") or "").strip()
+        if not name or not match(name, item) or units.ambiguous(name) or NOT_GROCER.search(merchant):
             continue
         price = units.effective_price(it.get("current_price"), it.get("pre_price_text"))
         seg = units.segment(name, item["inc"])
@@ -36,9 +50,7 @@ def rows_from(payload, item, fsa, dist_km, seen_at):
             continue
         up = units.unit_price(price, item["unit"], seg, "", it.get("post_price_text") or "")
         assumed = False
-        if up is None and item.get("default") and price and not units.mass_or_volume(seg):
-            up, assumed = price / item["default"], True
-        if not plausible(item, up):
+        if not plausible(item, up) or not household(item, price / up):
             continue
         out.append({
             "item": item["id"], "kind": "flyer", "merchant": (it.get("merchant_name") or "").strip(),
@@ -51,11 +63,11 @@ def rows_from(payload, item, fsa, dist_km, seen_at):
         })
     for it in payload.get("ecom_items") or []:
         name = it.get("name") or ""
-        if not name or not match(name, item):
+        if not name or not match(name, item) or units.ambiguous(name) or not ONLINE_OK.search(it.get("merchant") or ""):
             continue
         price = units.money(it.get("current_price"))
         up = units.unit_price(price, item["unit"], units.segment(name, item["inc"]))
-        if not plausible(item, up):
+        if not plausible(item, up) or not household(item, price / up):
             continue
         orig = units.money(it.get("original_price"))
         out.append({

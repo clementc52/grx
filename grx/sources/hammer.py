@@ -18,7 +18,6 @@ from ..catalog import ITEMS, match, plausible
 
 URLS = ["https://jacobfilipp.com/hammerdata/hammer-5-csv.zip"]
 LASTUPDATED = "https://jacobfilipp.com/hammerdata/hammer-lastupdated.txt"
-_PPU = re.compile(r"\$?\s*(\d+(?:\.\d+)?)\s*/\s*(\d+(?:\.\d+)?)?\s*(kg|g|ml|l|lb|ea|un|each)\b", re.I)
 
 csv.field_size_limit(10_000_000)
 
@@ -53,18 +52,6 @@ def _reader(z, name):
     return csv.DictReader(io.TextIOWrapper(z.open(name), encoding="utf-8-sig", errors="replace", newline=""))
 
 
-def _size_from_ppu(price, ppu_text):
-    """Package size implied by price / price-per-unit, in g, ml or count."""
-    m = _PPU.search(ppu_text or "")
-    if not m or not price:
-        return None
-    per, qty, u = float(m.group(1)), float(m.group(2) or 1), m.group(3).lower()
-    if per <= 0:
-        return None
-    mult = {"kg": 1000, "g": 1, "l": 1000, "ml": 1, "lb": 453.592, "ea": 1, "un": 1, "each": 1}[u]
-    return round(price / per * qty * mult, 1)
-
-
 def _unit_price(price, item, name, size_text):
     has_digit = any(c.isdigit() for c in size_text or "")
     post = "" if has_digit else (size_text or "")
@@ -85,6 +72,8 @@ def parse(zip_path, since_days=None, log=print, basket=6, recent_days=120):
     prods = {}
     for r in _reader(z, _member(z, "product")):
         name = r.get("product_name") or ""
+        if units.ambiguous(name):
+            continue
         for item in ITEMS:
             if match(name, item):
                 prods[r.get("id")] = (item, (r.get("vendor") or "").strip(), name, r.get("units") or "", r.get("brand") or "")
@@ -145,19 +134,13 @@ def parse(zip_path, since_days=None, log=print, basket=6, recent_days=120):
     if not chosen:
         raise RuntimeError("no stable products selected; refusing to overwrite history")
 
-    # pass 2: daily prices of basket products, sizes for shrinkflation
+    # pass 2: daily prices of basket products
     daily_ = {}   # pid -> {date: (up, was_up, price)}
-    sizes = {}
     for x in rows():
         if x is None:
             continue
         pid, d, price, up, r = x
         item, vendor, name, size_text, brand = prods[pid]
-        s_ = _size_from_ppu(price, r.get("price_per_unit"))
-        if s_:
-            h = sizes.setdefault(pid, [])
-            if not h or abs(h[-1][1] - s_) / max(h[-1][1], 1e-9) > 0.02:
-                h.append((d, s_, price))
         if pid not in chosen:
             continue
         was = units.money(r.get("old_price"))
@@ -195,7 +178,7 @@ def parse(zip_path, since_days=None, log=print, basket=6, recent_days=120):
             up, _, price = daily_[pid][dd]
             cur.append({"unit_price": round(up, 4), "name": prods[pid][2], "price": price, "units": prods[pid][3], "last_seen": dd})
         audit.setdefault(iid, {})[vendor] = sorted(cur, key=lambda c: c["unit_price"])
-    return _series(agg), _shrink(sizes, prods), audit
+    return _series(agg), audit
 
 
 def _series(agg):
@@ -214,17 +197,3 @@ def _series(agg):
             P[j], W[j] = round(p, 4), (round(w, 4) if w else None)
         out.setdefault(i, {})[v] = {"d0": ds[0], "p": P, "w": W}
     return out
-
-
-def _shrink(sizes, prods):
-    """Products whose package got smaller while the shelf price barely moved."""
-    ev = []
-    for pid, h in sizes.items():
-        for (d0, s0, p0), (d1, s1, p1) in zip(h, h[1:]):
-            if s1 < s0 * 0.97 and p1 >= p0 * 0.97:
-                item, vendor, name, _, brand = prods[pid]
-                ev.append({"item": item["id"], "vendor": vendor, "name": name, "brand": brand,
-                           "date": d1, "size_before": s0, "size_after": s1, "price_before": p0, "price_after": p1,
-                           "hidden_increase": round((p1 / s1) / (p0 / s0) - 1, 4)})
-    ev.sort(key=lambda e: e["date"], reverse=True)
-    return ev[:200]

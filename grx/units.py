@@ -109,6 +109,23 @@ def effective_price(current, pre_text=None):
     return c
 
 
+_RANGE = re.compile(r"\d+(?:\.\d+)?\s*(?:-|–|/|to)\s*\d+(?:\.\d+)?\s*(?:kg|g|ml|l|lb|lbs|oz)\b", re.I)
+_SIZE_TOKEN = re.compile(r"\d+(?:\.\d+)?\s*(?:kg|g|ml|l|lb|lbs|oz|'s|pcs?|pack|pk|ct|count|un|ea)\b", re.I)
+_ORWORD = re.compile(r"\s(?:or|ou)\s", re.I)
+
+
+def ambiguous(name):
+    """True when a listing can't be priced per unit with certainty:
+    a size range ("227/250 G", "800-930 g") or an "X or Y" ad that prints
+    more than one size ("YOGURT 650 g or CREAM CHEESE 227 g")."""
+    n = name or ""
+    if _RANGE.search(n):
+        return True
+    if _ORWORD.search(n) and len(_SIZE_TOKEN.findall(n)) > 1:
+        return True
+    return False
+
+
 _OR = re.compile(r"\s+(?:or|ou)\s+|\s*/\s*(?=[a-z])", re.I)
 
 

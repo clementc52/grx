@@ -63,8 +63,8 @@ jobs:
       - name: In-store prices (Open Prices, open data)
         run: python -m grx.run openprices || echo "::warning::Open Prices fetch failed"
       - name: Flyers and online prices (Flipp)
-        run: python -m grx.run flipp ${{ steps.d.outputs.full == 'true' && '--full' || '' }}
-      - name: Build board
+        run: python -m grx.run flipp ${{ steps.d.outputs.full == 'true' && '--full' || '' }} || echo "::warning::Flipp sweep failed; keeping previous flyer data"
+      - name: Build and validate board (a failure here keeps the previous site live)
         run: python -m grx.run build
       - name: Alerts
         env:

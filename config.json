@@ -4,31 +4,26 @@
   "radius_km": 100,
   "max_fsas": 10,
   "hammer_days": 730,
-  "price_match_at": [
-    "No Frills",
-    "Real Canadian Superstore",
-    "Giant Tiger"
-  ],
   "watch": [
     {
       "item": "eggs-large",
-      "below": 4.0
-    },
-    {
-      "item": "chicken-breast",
-      "signal": "STOCK UP"
+      "below": 3.5
     },
     {
       "item": "butter",
+      "below": 4.5
+    },
+    {
+      "item": "chicken-breast",
+      "below": 8.8
+    },
+    {
+      "item": "milk-2",
       "below": 5.0
     },
     {
       "item": "coffee",
-      "signal": "STOCK UP"
-    },
-    {
-      "item": "toilet-paper",
-      "signal": "STOCK UP"
+      "below": 12.0
     }
   ],
   "site_url": "https://clementc52.github.io/grx/",
