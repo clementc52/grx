@@ -66,7 +66,22 @@ def cmd_flipp(full):
     return 0
 
 
-def cmd_hammer():
+def hammer_stamp():
+    try:
+        with urllib.request.urlopen(hammer.LASTUPDATED, timeout=30) as r:
+            return r.read().decode().strip()[:40]
+    except Exception:
+        return None
+
+
+def cmd_hammer(if_new=False):
+    if if_new:
+        stamp = hammer_stamp()
+        old = B.load(os.path.join(ROOT, "data/hammer/meta.json"), {}).get("last_load")
+        if stamp and stamp == old and os.path.exists(os.path.join(ROOT, "data/hammer/series.json")):
+            print(f"Hammer unchanged since {old}; skipping reload")
+            return 0
+        print(f"Hammer has a new load ({old} -> {stamp}); reloading")
     with tempfile.TemporaryDirectory() as d:
         z = hammer.download(os.path.join(d, "h.zip"))
         series, shrink, audit = hammer.parse(z, since_days=cfg().get("hammer_days", 730))
@@ -170,7 +185,7 @@ def main(argv):
     if c == "flipp":
         return cmd_flipp("--full" in argv)
     if c == "hammer":
-        return cmd_hammer()
+        return cmd_hammer("--if-new" in argv)
     if c == "statcan":
         return cmd_statcan()
     if c == "build":
