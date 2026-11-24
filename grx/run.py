@@ -185,8 +185,14 @@ def cmd_alerts():
     if not board:
         return
     state = B.load(os.path.join(ROOT, "data/alerts_state.json"), {})
+    open_titles = set()
+    if os.environ.get("GITHUB_TOKEN"):
+        try:   # idempotent even if the state file wasn't saved last time
+            open_titles = {i["title"] for i in gh("GET", "/issues?state=open&labels=alert&per_page=100") or []}
+        except Exception as e:
+            print("  ! could not list open alerts:", e)
     c = cfg()
-    hits = [h for h in check_rules(board, c.get("watch", []), c.get("my_stores")) if h["key"] not in state]
+    hits = [h for h in check_rules(board, c.get("watch", []), c.get("my_stores")) if h["key"] not in state and h["title"] not in open_titles]
     for h in hits:
         print("ALERT:", h["body"])
         try:

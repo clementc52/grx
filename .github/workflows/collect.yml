@@ -89,8 +89,11 @@ jobs:
           git config user.email "grx-bot@users.noreply.github.com"
           git add data
           git diff --cached --quiet || git commit -q -m "prices $(date -u +%FT%TZ)"
-          git pull --rebase -q || true
-          git push -q || echo "::warning::push failed"
+          for i in 1 2 3 4 5; do
+            git pull --rebase -q -X theirs && git push -q && exit 0
+            sleep $((i * 5))
+          done
+          echo "::warning::price log push failed after 5 tries"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
