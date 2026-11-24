@@ -144,6 +144,25 @@ def test_hammer_and_build_end_to_end():
         assert os.path.exists(os.path.join(root, "site/data/hist.json"))
 
 
+def test_openprices_rows():
+    from grx.sources import openprices
+    home = (43.663, -79.396)
+    page = {"items": [
+        {"id": 1, "product_name": None, "category_tag": "en:bananas", "price": 1.52, "price_per": "KILOGRAM", "date": "2026-11-20",
+         "price_is_discounted": False, "product": None, "proof": {"type": "PRICE_TAG"},
+         "location": {"osm_name": "No Frills", "osm_brand": "No Frills", "osm_address_city": "Toronto", "osm_lat": 43.66, "osm_lon": -79.40}},
+        {"id": 2, "price": 4.99, "price_per": None, "date": "2026-11-21", "proof": {"type": "RECEIPT"},
+         "product": {"product_name": "Lactantia Salted Butter", "product_quantity": 454, "product_quantity_unit": "g"},
+         "location": {"osm_name": "T&T Supermarket", "osm_brand": "T&T Supermarket", "osm_lat": 43.80, "osm_lon": -79.42}},
+        {"id": 3, "price": 2.0, "product": {"product_name": "Nutella"}, "location": {}},
+    ], "total": 3, "pages": 1}
+    rows = openprices.collect(home, 100, fetcher=lambda params: page, log=lambda *a: None)
+    by = {r["item"]: r for r in rows}
+    assert by["bananas"]["unit_price"] == 1.52 and by["bananas"]["merchant"] == "No Frills" and by["bananas"]["proof"] == "PRICE_TAG"
+    assert abs(by["butter"]["unit_price"] - 4.99 / .454) < 1e-3 and by["butter"]["merchant"] == "T&T"
+    assert len(rows) == 2
+
+
 def test_geo_sweep():
     s = geo.sweep("M5S", 100, 10)
     assert s[0][0] == "M5S" and len(s) == 10 and all(d <= 100 for _, d in s)

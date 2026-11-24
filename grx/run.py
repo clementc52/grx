@@ -16,7 +16,7 @@ import urllib.request
 
 from . import build as B
 from . import geo
-from .sources import flipp, hammer, statcan
+from .sources import flipp, hammer, openprices, statcan
 
 ROOT = os.environ.get("GRX_ROOT", ".")
 
@@ -104,6 +104,14 @@ def cmd_hammer(if_new=False):
     print(f"Hammer: {len(series)} items, vendors {vendors}, {len(shrink)} shrink events")
 
 
+def cmd_openprices():
+    c = cfg()
+    lat, lon, _ = geo.FSAS[c["home_fsa"]]
+    rows = openprices.collect((lat, lon), c["radius_km"])
+    write("data/openprices/latest.json", {"at": dt.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"), "rows": rows})
+    return 0
+
+
 def cmd_statcan():
     with tempfile.TemporaryDirectory() as d:
         z = statcan.download(os.path.join(d, "s.zip"))
@@ -188,6 +196,8 @@ def main(argv):
         return cmd_hammer("--if-new" in argv)
     if c == "statcan":
         return cmd_statcan()
+    if c == "openprices":
+        return cmd_openprices()
     if c == "build":
         b = B.build(ROOT)
         print(f"board: {len(b['items'])} items, {b['sources']['flipp']['rows']} live offers from {b['sources']['flipp']['merchants']} merchants")

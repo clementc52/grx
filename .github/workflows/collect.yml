@@ -60,6 +60,8 @@ jobs:
       - name: StatCan averages
         if: steps.d.outputs.daily == 'true'
         run: python -m grx.run statcan || echo "::warning::StatCan load failed"
+      - name: In-store prices (Open Prices, open data)
+        run: python -m grx.run openprices || echo "::warning::Open Prices fetch failed"
       - name: Flyers and online prices (Flipp)
         run: python -m grx.run flipp ${{ steps.d.outputs.full == 'true' && '--full' || '' }}
       - name: Build board

@@ -92,7 +92,10 @@ def build(root=".", today=None, cfg=None):
         pooled.setdefault(cat, []).extend(fc["gaps"])
     curves = {c: A.km_curve(g, []) if g else None for c, g in pooled.items()}
 
-    live = [r for r in latest.get("rows", []) if valid(r) and r.get("km", 0) <= radius and
+    op = load(os.path.join(root, "data/openprices/latest.json"), {"rows": [], "at": None})
+    fresh = (today - dt.timedelta(days=cfg.get("in_store_days", 21))).isoformat()
+    community = [r for r in op.get("rows", []) if valid(r) and (r.get("km") is None or r["km"] <= radius) and (r.get("date") or "") >= fresh]
+    live = community + [r for r in latest.get("rows", []) if valid(r) and r.get("km", 0) <= radius and
             ((r["kind"] == "flyer" and r.get("valid_to", "") >= tday and r.get("valid_from", "") <= tday) or r["kind"] == "online")]
     items_out, hist_out, match_plan = [], {}, []
     matchers = cfg.get("price_match_at", ["No Frills"])
@@ -122,7 +125,7 @@ def build(root=".", today=None, cfg=None):
         offs = []
         for r in offers[:80]:
             h = hv.get(norm(r["merchant"]))
-            o = {k: r.get(k) for k in ("merchant", "name", "price", "unit_price", "kind", "story", "valid_to", "km", "fsa", "pre", "post", "was", "assumed", "pack")}
+            o = {k: r.get(k) for k in ("merchant", "name", "price", "unit_price", "kind", "story", "valid_to", "km", "fsa", "pre", "post", "was", "assumed", "pack", "store", "date", "proof")}
             o["bulk"] = bool(r.get("pack") and r["pack"] > 4 * it["show"])
             o["verdict"] = A.verdict(r["unit_price"], h[1]) if h else None
             o["chain"] = chain(r["merchant"])
@@ -166,7 +169,8 @@ def build(root=".", today=None, cfg=None):
         "home": {"label": cfg.get("home_label", ""), "fsa": cfg.get("home_fsa"), "radius_km": radius},
         "sources": {"flipp": {"at": latest.get("at"), "rows": len(live), "merchants": len(merchants), "fsas": latest.get("fsas", []),
                               "history_rows": len(hist_rows)},
-                    "hammer": hmeta, "statcan": {"items": len(stat)}},
+                    "hammer": hmeta, "statcan": {"items": len(stat)},
+                    "openprices": {"at": op.get("at"), "rows": len(op.get("rows", [])), "fresh": len(community)}},
         "items": items_out, "shrink": shrink[:60], "lockstep": A.lockstep(series),
         "match": sorted(match_plan, key=lambda m: m["at"]), "merchants": merchants,
         "chains": sorted(({"name": k, "offers": v} for k, v in cc.items()), key=lambda x: -x["offers"]),
