@@ -39,8 +39,9 @@ def cmd_flipp(full):
     print(f"Flipp sweep over {len(fsas)} FSAs: {[f for f, _ in fsas]}")
     rows, errors = flipp.collect(fsas)
     old_full = B.load(os.path.join(ROOT, "data/flipp/latest.json"), {"rows": []})
-    if not rows or (full and len(rows) < 0.4 * len(old_full.get("rows", []))):
-        print(f"::warning::Flipp sweep looks incomplete ({len(rows)} rows, {errors} errors vs {len(old_full.get('rows', []))} before); keeping previous data")
+    old_n = sum(1 for r in old_full.get("rows", []) if B.valid(r))   # only rows the current rules accept
+    if not rows or (full and len(rows) < 0.4 * old_n):
+        print(f"::warning::Flipp sweep looks incomplete ({len(rows)} rows, {errors} errors vs {old_n} before); keeping previous data")
         return 0
     month = time.strftime("%Y-%m")
     hist = os.path.join(ROOT, f"data/flipp/{month}.jsonl")
@@ -75,14 +76,27 @@ def hammer_stamp():
         return None
 
 
+def catalog_version():
+    """Fingerprint of the matching rules; shelf history is rebuilt whenever they change."""
+    import hashlib
+    from . import catalog, units
+    h = hashlib.sha1()
+    for mod in (catalog, units, hammer):
+        with open(mod.__file__, "rb") as f:
+            h.update(f.read())
+    return h.hexdigest()[:12]
+
+
 def cmd_hammer(if_new=False):
     if if_new:
         stamp = hammer_stamp()
-        old = B.load(os.path.join(ROOT, "data/hammer/meta.json"), {}).get("last_load")
-        if stamp and stamp == old and os.path.exists(os.path.join(ROOT, "data/hammer/series.json")):
+        meta = B.load(os.path.join(ROOT, "data/hammer/meta.json"), {})
+        old = meta.get("last_load")
+        if (stamp and stamp == old and meta.get("catalog") == catalog_version()
+                and os.path.exists(os.path.join(ROOT, "data/hammer/series.json"))):
             print(f"Hammer unchanged since {old}; skipping reload")
             return 0
-        print(f"Hammer has a new load ({old} -> {stamp}); reloading")
+        print(f"Hammer reload: load {old} -> {stamp}, catalog {meta.get('catalog')} -> {catalog_version()}")
     with tempfile.TemporaryDirectory() as d:
         z = hammer.download(os.path.join(d, "h.zip"))
         series, audit = hammer.parse(z, since_days=cfg().get("hammer_days", 730))
@@ -100,6 +114,7 @@ def cmd_hammer(if_new=False):
                 x = xs[0]
                 print(f"  audit {iid:16} {v:12} {x['unit_price']:9.4f}  {x['price']}  [{x['units']}] {x['name'][:70]}")
     write("data/hammer/meta.json", {"fetched": dt.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"), "last_load": last,
+                                     "catalog": catalog_version(),
                                      "vendors": vendors, "items": len(series)})
     print(f"Hammer: {len(series)} items, vendors {vendors}")
 

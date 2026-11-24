@@ -56,7 +56,7 @@ jobs:
       - name: Tests
         run: python tests/test_all.py
       - name: Shelf-price history (Project Hammer; reloads within the hour of each new daily load)
-        run: python -m grx.run hammer ${{ steps.d.outputs.daily == 'true' && '' || '--if-new' }} || echo "::warning::Project Hammer load failed; keeping cached history"
+        run: python -m grx.run hammer ${{ steps.d.outputs.daily != 'true' && '--if-new' || '' }} || echo "::warning::Project Hammer load failed; keeping cached history"
       - name: StatCan averages
         if: steps.d.outputs.daily == 'true'
         run: python -m grx.run statcan || echo "::warning::StatCan load failed"
